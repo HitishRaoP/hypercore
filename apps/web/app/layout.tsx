@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
 import "@hypercore/ui/styles/globals.css";
+import localFont from "next/font/local";
+
+const switzer = localFont({
+  src: "./fonts/Switzer-Variable.ttf",
+  variable: "--font-switzer",
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -13,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={switzer.className}>{children}</body>
     </html>
   );
 }
