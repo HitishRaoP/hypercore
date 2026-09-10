@@ -36,7 +36,6 @@ interface HWTemplateProps {
 export const HWTemplate = ({ onBack }: HWTemplateProps) => {
   return (
     <Card className="flex max-h-[calc(100vh-228px)] w-full flex-col overflow-hidden pb-0">
-
       <CardHeader className="shrink-0">
         <h1 className="text-xl">Deploy Hello World</h1>
         <p className="text-sm text-muted-foreground">
@@ -75,7 +74,7 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button className="bg-blue-600 hover:bg-blue-700">Deploy</Button>
+        <Button>Deploy</Button>
       </CardFooter>
     </Card>
   );
