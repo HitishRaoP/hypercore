@@ -27,7 +27,7 @@ export function UploadCode({ onBack }: UploadCodeProps) {
   };
 
   return (
-    <Card className="w-2/5 sm:w-2/3 md:w-3/4 lg:w-full overflow-hidden pb-0">
+    <Card className="w-1/2 sm:w-2/3 md:w-full overflow-hidden pb-0">
       <CardHeader>
         <h1 className="text-xl">Upload and deploy</h1>
         <p className="text-sm text-muted-foreground">
