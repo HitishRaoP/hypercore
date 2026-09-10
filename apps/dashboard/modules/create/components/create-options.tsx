@@ -33,7 +33,7 @@ interface CreateOptionsProps {
 
 export const CreateOptions = ({ onSelect }: CreateOptionsProps) => {
   return (
-    <Card className="w-full">
+    <Card className="w-2/5 sm:w-2/3 md:w-3/4 lg:w-full ">
       <CardHeader>
         <h1 className="text-xl">Make something new</h1>
         <p className="text-sm text-muted-foreground">

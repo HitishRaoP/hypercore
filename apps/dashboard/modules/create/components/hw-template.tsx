@@ -35,7 +35,7 @@ interface HWTemplateProps {
 
 export const HWTemplate = ({ onBack }: HWTemplateProps) => {
   return (
-    <Card className="flex max-h-[calc(100vh-228px)] w-full flex-col overflow-hidden pb-0">
+    <Card className="flex max-h-[calc(100vh-228px)] w-2/5 sm:w-2/3 md:w-3/4 lg:w-full flex-col overflow-hidden pb-0">
 
       <CardHeader className="shrink-0">
         <h1 className="text-xl">Deploy Hello World</h1>
