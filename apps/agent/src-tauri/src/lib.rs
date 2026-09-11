@@ -1,4 +1,5 @@
 mod machine_info;
+mod rabbitmq;
 
 use machine_info::{collect_metrics, MachineInfo};
 use serde::{Deserialize, Serialize};
@@ -104,6 +105,7 @@ pub fn run() {
                 })
                 .build(app)?;
             let handle = app.handle().clone();
+
             tauri::async_runtime::spawn(async move {
                 let mut interval = tokio::time::interval(std::time::Duration::from_secs(2));
                 loop {
@@ -111,6 +113,18 @@ pub fn run() {
                     let _ = handle.emit("metrics_tick", collect_metrics());
                 }
             });
+            /*
+             * Start RabbitMQ worker using this machine's
+             * unique machine_id.
+             */
+            let machine_id = MachineInfo::collect().machine_id;
+
+            tauri::async_runtime::spawn(async move {
+                if let Err(error) = rabbitmq::start_worker(machine_id).await {
+                    eprintln!("RabbitMQ worker stopped: {error}");
+                }
+            });
+
             Ok(())
         })
         .on_window_event(|window, event| {
