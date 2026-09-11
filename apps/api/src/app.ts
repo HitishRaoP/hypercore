@@ -9,6 +9,8 @@ const app = express();
 
 app.use(cors());
 
+app.use(express.json());
+
 await connectRabbitMQ();
 
 app.use("/code-upload", codeUploadRouter);

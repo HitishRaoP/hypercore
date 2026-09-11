@@ -59,6 +59,11 @@ async fn register_node(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    match dotenvy::dotenv() {
+        Ok(path) => println!("Loaded environment from: {:?}", path),
+        Err(error) => println!("Could not load .env: {error}"),
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {

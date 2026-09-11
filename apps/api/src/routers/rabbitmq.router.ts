@@ -3,7 +3,7 @@ import { sendDeployment } from "../lib/rabbitmq.ts";
 
 const router = Router();
 
-router.post("/deployments", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const {
       deploymentId,
