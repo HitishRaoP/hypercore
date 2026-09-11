@@ -35,7 +35,7 @@ export function UploadCode({ onBack }: UploadCodeProps) {
       if (!value.file) return;
       const formData = new FormData();
       formData.append("file", value.file);
-      await axios.post("http://localhost:8080/upload-code", formData);
+      await axios.post("http://localhost:8080/code-upload", formData);
       form.reset();
     },
   });
