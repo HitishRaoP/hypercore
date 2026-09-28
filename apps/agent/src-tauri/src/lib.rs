@@ -13,7 +13,7 @@ use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager};
 pub use tools::ToolchainStatus;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct RegistrationResponse {
     status: String,
@@ -21,6 +21,37 @@ struct RegistrationResponse {
     session_token: String,
     assigned_region: String,
     heartbeat_interval_secs: u64,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct SavedRegistration {
+    coordinator_url: String,
+    machine_id: String,
+    registration: RegistrationResponse,
+}
+
+fn registration_file_path() -> PathBuf {
+    dirs::home_dir()
+        .unwrap_or_else(std::env::temp_dir)
+        .join(".HyperCore")
+        .join("registration.json")
+}
+
+fn load_saved_registration() -> Option<SavedRegistration> {
+    let path = registration_file_path();
+    let raw = std::fs::read_to_string(&path).ok()?;
+    serde_json::from_str::<SavedRegistration>(&raw).ok()
+}
+
+fn save_registration_to_disk(value: &SavedRegistration) {
+    let path = registration_file_path();
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    if let Ok(raw) = serde_json::to_string_pretty(value) {
+        let _ = std::fs::write(&path, raw);
+    }
 }
 
 /// Tracks the active SSE worker so re-registering swaps the stream
@@ -35,6 +66,15 @@ fn set_sse_worker(handle: tauri::async_runtime::JoinHandle<()>) {
             previous.abort();
         }
         *guard = Some(handle);
+    }
+}
+
+fn clear_sse_worker() {
+    let slot = SSE_WORKER.get_or_init(|| Mutex::new(None));
+    if let Ok(mut guard) = slot.lock() {
+        if let Some(previous) = guard.take() {
+            previous.abort();
+        }
     }
 }
 
@@ -76,6 +116,29 @@ fn get_machine_info() -> Result<MachineInfo, String> {
 }
 
 #[tauri::command]
+fn get_saved_registration(app: tauri::AppHandle) -> Option<SavedRegistration> {
+    let saved = load_saved_registration()?;
+    // Re-open the outbound scheduler stream so a restarted agent resumes
+    // work without requiring the user to register again.
+    connect_to_scheduler(
+        &app,
+        saved.coordinator_url.clone(),
+        saved.machine_id.clone(),
+    );
+    Some(saved)
+}
+
+#[tauri::command]
+fn unregister_node() -> Result<(), String> {
+    clear_sse_worker();
+    let path = registration_file_path();
+    if path.exists() {
+        std::fs::remove_file(&path).map_err(|error| format!("Could not clear registration: {error}"))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 async fn register_node(
     app: tauri::AppHandle,
     coordinator_url: String,
@@ -114,7 +177,14 @@ async fn register_node(
 
     // The agent opens an outbound SSE stream to the scheduler.
     // No broker credentials are read, stored, or required.
-    connect_to_scheduler(&app, coordinator_url, machine.machine_id);
+    connect_to_scheduler(&app, coordinator_url.clone(), machine.machine_id.clone());
+
+    let saved = SavedRegistration {
+        coordinator_url: coordinator_url.clone(),
+        machine_id: machine.machine_id.clone(),
+        registration: registration.clone(),
+    };
+    save_registration_to_disk(&saved);
 
     let _ = app.emit("node_registered", &registration);
     Ok(registration)
@@ -188,6 +258,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_machine_info,
             register_node,
+            get_saved_registration,
+            unregister_node,
             get_toolchain_status
         ])
         .run(tauri::generate_context!())
