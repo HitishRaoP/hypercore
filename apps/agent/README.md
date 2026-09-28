@@ -45,8 +45,8 @@ git add -A && git commit -m "chore: release agent v0.2.0"
 git tag v0.2.0 && git push origin v0.2.0
 ```
 
-Pushing the `v*` tag builds the agent on Windows, macOS, and Linux and
-attaches the installers to the GitHub Release. You can also trigger the
+Pushing the `v*` tag builds the Windows agent installer and attaches it to
+the GitHub Release. You can also trigger the
 workflow manually from the Actions tab with a version input (it creates and
 pushes the tag for you). The dashboard download page
 (`apps/dashboard/app/download`) reads that release to offer per-OS downloads.

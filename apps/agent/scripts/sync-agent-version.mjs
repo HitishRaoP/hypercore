@@ -39,7 +39,7 @@ if (!/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/.test(version)) {
 function updateJsonVersion(path, version) {
   // Surgical replacement of the top-level "version" line only, so the rest
   // of the file (indentation, line endings, trailing whitespace) is
-  // preserved byte-for-byte.
+  // preserved byte-for-byte. A no-op when already in sync.
   const text = readFileSync(path, "utf8");
   const eol = text.includes("\r\n") ? "\r\n" : "\n";
   const lines = text.split(eol);
@@ -51,8 +51,14 @@ function updateJsonVersion(path, version) {
   }
   const trailingComma = lines[idx].trimEnd().endsWith(",") ? "," : "";
   const indent = lines[idx].slice(0, lines[idx].indexOf('"'));
-  lines[idx] = `${indent}"version": "${version}"${trailingComma}`;
-  writeFileSync(path, lines.join(eol));
+  const next = `${indent}"version": "${version}"${trailingComma}`;
+  if (lines[idx] !== next) {
+    lines[idx] = next;
+    writeFileSync(path, lines.join(eol));
+    console.log(`[sync-agent-version] ${path} version set to ${version}`);
+  } else {
+    console.log(`[sync-agent-version] ${path} already at ${version}`);
+  }
 }
 
 // 1. package.json
@@ -61,17 +67,52 @@ updateJsonVersion(join(agentDir, "package.json"), version);
 // 2. tauri.conf.json
 updateJsonVersion(join(agentDir, "src-tauri", "tauri.conf.json"), version);
 
-// 3. Cargo.toml — replace only the [package] version, leave dependency versions alone.
+// 3. Cargo.toml — replace the version value under [package] only, leaving
+// dependency versions and formatting untouched. Line-based so it is immune
+// to line-ending or layout differences, and a no-op (not a failure) when
+// the file already carries the target version.
 const cargoPath = join(agentDir, "src-tauri", "Cargo.toml");
-const cargo = readFileSync(cargoPath, "utf8");
-const replaced = cargo.replace(
-  /(\[package\][^\[]*?\nversion\s*=\s*")[^"]+(")/,
-  `$1${version}$2`,
-);
-if (replaced === cargo) {
-  console.error("failed to find [package] version in src-tauri/Cargo.toml");
+const cargoText = readFileSync(cargoPath, "utf8");
+const cargoEol = cargoText.includes("\r\n") ? "\r\n" : "\n";
+const cargoLines = cargoText.split(/\r?\n/);
+let inPackage = false;
+let cargoFound = false;
+let cargoChanged = false;
+for (let i = 0; i < cargoLines.length; i++) {
+  const trimmed = cargoLines[i].trim();
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    inPackage = trimmed === "[package]";
+    continue;
+  }
+  if (!inPackage) continue;
+  const m = /^(\s*version\s*=\s*")([^"]*)(".*)$/.exec(cargoLines[i]);
+  if (m) {
+    cargoFound = true;
+    if (m[2] !== version) {
+      cargoLines[i] = `${m[1]}${version}${m[3]}`;
+      cargoChanged = true;
+    }
+    break;
+  }
+}
+if (!cargoFound) {
+  console.error(
+    `[sync-agent-version] failed to find version under [package] in ${cargoPath}`,
+  );
+  console.error("[sync-agent-version] first lines of the file:");
+  console.error(
+    cargoLines
+      .slice(0, 12)
+      .map((line) => JSON.stringify(line))
+      .join("\n"),
+  );
   process.exit(1);
 }
-writeFileSync(cargoPath, replaced);
+if (cargoChanged) {
+  writeFileSync(cargoPath, cargoLines.join(cargoEol));
+  console.log(`[sync-agent-version] ${cargoPath} version set to ${version}`);
+} else {
+  console.log(`[sync-agent-version] ${cargoPath} already at ${version}`);
+}
 
-console.log(`[sync-agent-version] agent version set to ${version}`);
+console.log(`[sync-agent-version] done — agent version is ${version}`);

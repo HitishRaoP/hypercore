@@ -3,8 +3,8 @@ name: Release agent
 # Cutting a release:
 #   1. (optional, keeps repo files in sync)  bun ./apps/agent/scripts/sync-agent-version.mjs 0.2.0
 #   2. git tag v0.2.0 && git push origin v0.2.0
-#   3. This workflow builds the Tauri agent on Windows / macOS / Linux and
-#      attaches the installers to the GitHub Release for that tag.
+#   3. This workflow builds the Tauri agent for Windows and attaches the
+#      installer to the GitHub Release for that tag.
 # Or: run it manually from the Actions tab with a version input — the
 # `prepare` job creates and pushes the tag for you.
 
@@ -70,19 +70,9 @@ jobs:
           echo "created=$CREATED" >> "$GITHUB_OUTPUT"
 
   build:
-    name: Build agent (${{ matrix.os }})
+    name: Build agent (Windows)
     needs: prepare
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            args: ""
-          - os: macos-latest
-            args: "--target universal-apple-darwin"
-          - os: ubuntu-22.04
-            args: ""
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -90,20 +80,6 @@ jobs:
           # When dispatched manually the checkout is on main; fetch the tag instead.
           ref: ${{ needs.prepare.outputs.tag }}
           fetch-depth: 0
-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -132,8 +108,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Each per-OS runner fetches native javy/esbuild binaries so they ship
-      # inside that OS's installer (see apps/agent/scripts/fetch-tools.mjs).
+      # The runner fetches the native Windows javy/esbuild binaries so they
+      # ship inside the installer (see apps/agent/scripts/fetch-tools.mjs).
       - name: Fetch bundled toolchain
         working-directory: apps/agent
         run: bun run fetch:tools
@@ -145,8 +121,7 @@ jobs:
         with:
           projectPath: apps/agent
           tagName: ${{ needs.prepare.outputs.tag }}
-          releaseName: "Hypercore Agent ${{ needs.prepare.outputs.tag }}"
-          releaseBody: "See the assets below to download the Hypercore Agent for your OS."
+          releaseName: "Hypercore Agent ${{ needs.prepare.outputs.tag }} (Windows)"
+          releaseBody: "Windows installer for the Hypercore Agent. See the assets below."
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }}
