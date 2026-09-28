@@ -32,3 +32,6 @@ dirs = "5.0"
 futures-util = "0.3"
 tokio-util = { version = "0.7", features = ["io"] }
 tempfile = "3"
+wasmtime = "30"
+wasmtime-wasi = { version = "30", features = ["preview1"] }
+base64 = "0.22"

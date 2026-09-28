@@ -24,6 +24,15 @@ exe-adjacent → dev checkout (`src-tauri/resources/tools`) → `PATH`
 `get_toolchain_status` command. Binaries are git-ignored; each per-OS
 release job runs `fetch:tools` on its own runner before `tauri build`.
 
+## Function execution (on this node)
+
+URL hits arrive as SSE `invoke` events; the agent runs the deployment's
+`worker.wasm` locally with the `wasmtime` crate (`src/executor.rs`, WASI
+preview1) and POSTs the result to `/invocations/:id/result`. Timeouts use
+epoch interruption (wall clock) plus a fuel backstop; stdout is capped at
+4MB. `cargo test --lib executor` covers this end-to-end using the fetched
+javy (skips gracefully when the toolchain isn't fetched).
+
 ## Recommended IDE Setup
 
 - [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)

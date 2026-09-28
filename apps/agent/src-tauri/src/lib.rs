@@ -1,6 +1,7 @@
 mod machine_info;
 mod sse;
 mod tools;
+mod executor;
 
 use machine_info::{collect_metrics, MachineInfo};
 use serde::{Deserialize, Serialize};

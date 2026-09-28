@@ -1,4 +1,5 @@
 use futures_util::StreamExt;
+use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -29,6 +30,33 @@ pub struct DeploymentRequest {
     pub entrypoint: Option<String>,
     #[serde(default)]
     pub files: Option<Vec<DeploymentFileRef>>,
+}
+
+/// Payload the scheduler forwards per URL hit down the agent's SSE stream:
+/// `event: invoke`. The agent runs the deployment's wasm locally and POSTs
+/// the result to `/invocations/:invocationId/result`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InvokeRequest {
+    pub invocation_id: String,
+    pub deployment_id: String,
+    #[serde(default)]
+    pub worker_name: Option<String>,
+    pub machine_id: String,
+    #[serde(default)]
+    pub artifact_key: Option<String>,
+    pub method: String,
+    pub path: String,
+    #[serde(default)]
+    pub query: String,
+    #[serde(default)]
+    pub body_b64: Option<String>,
+    #[serde(default = "default_invoke_timeout")]
+    pub timeout_ms: u64,
+}
+
+fn default_invoke_timeout() -> u64 {
+    8_000
 }
 
 #[derive(Debug, Clone)]
@@ -328,6 +356,144 @@ async fn run_deployment(
     Ok(format!("deployed {} -> wasm", entry_disk.display()))
 }
 
+struct InvokeOutcome {
+    ok: bool,
+    code: Option<i32>,
+    stdout_b64: Option<String>,
+    stderr: Option<String>,
+    error: Option<String>,
+    timed_out: bool,
+}
+
+/// Run one URL-hit invocation locally (wasmtime) and report the result back
+/// to the coordinator, which relays it to the waiting HTTP response.
+async fn handle_invoke(client: reqwest::Client, config: SseConfig, request: InvokeRequest) {
+    println!(
+        "invoke {}: {} {} (deployment {})",
+        request.invocation_id, request.method, request.path, request.deployment_id
+    );
+    let outcome = run_invocation(&client, &config, &request).await;
+    let url = format!(
+        "{}/invocations/{}/result",
+        base_url(&config),
+        request.invocation_id
+    );
+    let body = serde_json::json!({
+        "machineId": config.machine_id,
+        "ok": outcome.ok,
+        "code": outcome.code,
+        "stdoutB64": outcome.stdout_b64,
+        "stderr": outcome.stderr,
+        "error": outcome.error,
+        "timedOut": outcome.timed_out,
+    });
+    match client.post(&url).json(&body).send().await {
+        Ok(response) if response.status().is_success() => {
+            println!("invoke {} reported: ok={}", request.invocation_id, outcome.ok);
+        }
+        Ok(response) => {
+            eprintln!("invoke {} result rejected: {}", request.invocation_id, response.status());
+        }
+        Err(error) => {
+            eprintln!("invoke {} result post failed: {error}", request.invocation_id);
+        }
+    }
+}
+
+async fn run_invocation(
+    client: &reqwest::Client,
+    config: &SseConfig,
+    request: &InvokeRequest,
+) -> InvokeOutcome {
+    let fail = |error: String| InvokeOutcome {
+        ok: false,
+        code: None,
+        stdout_b64: None,
+        stderr: None,
+        error: Some(error),
+        timed_out: false,
+    };
+    if request.machine_id != config.machine_id {
+        return fail(format!("belongs to machine {}", request.machine_id));
+    }
+
+    // The deploy pipeline left worker.wasm in the deployment work dir; if the
+    // agent restarted since, re-pull the artifact through the coordinator
+    // (the agent never holds R2 credentials).
+    let wasm_path = work_dir(&request.deployment_id).join("worker.wasm");
+    if !wasm_path.is_file() {
+        match request.artifact_key.clone() {
+            Some(key) => {
+                println!("  artifact not cached, pulling {key}");
+                if let Err(error) = download_file(client, config, &key, &wasm_path).await {
+                    return fail(format!("artifact download failed: {error}"));
+                }
+            }
+            None => return fail("no wasm artifact for this deployment".to_owned()),
+        }
+    }
+    let wasm = match tokio::fs::read(&wasm_path).await {
+        Ok(bytes) => bytes,
+        Err(error) => return fail(format!("read wasm failed: {error}")),
+    };
+    let stdin = match &request.body_b64 {
+        Some(encoded) => match B64.decode(encoded) {
+            Ok(bytes) => bytes,
+            Err(error) => return fail(format!("bad request body: {error}")),
+        },
+        None => Vec::new(),
+    };
+    let env = vec![
+        ("HC_METHOD".to_owned(), request.method.clone()),
+        ("HC_PATH".to_owned(), request.path.clone()),
+        ("HC_QUERY".to_owned(), request.query.clone()),
+    ];
+    let input = crate::executor::ExecInput {
+        wasm,
+        stdin,
+        env,
+        timeout_ms: request.timeout_ms,
+    };
+    match tokio::task::spawn_blocking(move || crate::executor::execute(input)).await {
+        Ok(Ok(output)) => InvokeOutcome {
+            ok: output.code == 0,
+            code: Some(output.code),
+            stdout_b64: Some(B64.encode(&output.stdout)),
+            stderr: Some(output.stderr),
+            error: if output.code == 0 {
+                None
+            } else {
+                Some(format!("function exited with code {}", output.code))
+            },
+            timed_out: false,
+        },
+        Ok(Err(crate::executor::ExecError::TimedOut)) => InvokeOutcome {
+            ok: false,
+            code: None,
+            stdout_b64: None,
+            stderr: None,
+            error: Some("function timed out".to_owned()),
+            timed_out: true,
+        },
+        Ok(Err(error)) => InvokeOutcome {
+            ok: false,
+            code: None,
+            stdout_b64: None,
+            stderr: None,
+            error: Some(error.to_string()),
+            timed_out: false,
+        },
+        Err(error) => InvokeOutcome {
+            ok: false,
+            code: None,
+            stdout_b64: None,
+            stderr: None,
+            error: Some(format!("executor task failed: {error}")),
+            timed_out: false,
+        },
+    }
+}
+
 fn handle_routing(request: &DeploymentRequest, expected_machine: &str) -> Result<(), String> {
     if request.machine_id != expected_machine {
         return Err(format!("belongs to machine {}", request.machine_id));
@@ -426,6 +592,19 @@ pub async fn start_worker(config: SseConfig) {
                             }
                         }
                         Err(error) => eprintln!("Invalid deployment event: {error}"),
+                    }
+                } else if current_event == "invoke" && !current_data.trim().is_empty() {
+                    // URL hits run concurrently so one slow function never
+                    // head-of-line blocks deployments or other invocations.
+                    match serde_json::from_str::<InvokeRequest>(&current_data) {
+                        Ok(request) => {
+                            let task_client = client.clone();
+                            let task_config = config.clone();
+                            tokio::spawn(async move {
+                                handle_invoke(task_client, task_config, request).await;
+                            });
+                        }
+                        Err(error) => eprintln!("Invalid invoke event: {error}"),
                     }
                 }
                 current_event.clear();

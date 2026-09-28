@@ -4,7 +4,6 @@ import multer from "multer";
 import { pushDeployment } from "../lib/scheduler";
 import { artifactKeyFor, R2_BUCKET, S3 } from "../lib/s3";
 import { getDeployment, updateDeployment } from "../lib/store";
-import { invalidateArtifactCache } from "../lib/wasm-runner";
 import { invokeUrlFor, workerUrlFor } from "../lib/urls";
 
 const router = Router();
@@ -84,7 +83,6 @@ router.post("/:deploymentId/artifact", upload.single("wasm"), async (req, res) =
       }),
     );
     updateDeployment(deploymentId, { status: "built", artifactKey: key });
-    invalidateArtifactCache(deploymentId);
     console.log(`[deployments] artifact stored deployment=${deploymentId} key=${key} bytes=${file.size}`);
     console.log(`[deployments] live at ${invokeUrlFor(deploymentId)} (worker: ${workerUrlFor(record.workerName)})`);
     return res.status(201).json({

@@ -1,18 +1,18 @@
 import { Router, type Request, type Response } from "express";
 import express from "express";
 import { getDeployment, getLatestByWorkerName, type DeploymentRecord } from "../lib/store";
-import { fetchArtifactBytes, runWasm } from "../lib/wasm-runner";
+import { invokeOnAgent, type AgentInvokeResult } from "../lib/invocations";
 
 /**
- * Serving Plane: user-facing function URLs backed by the wasm artifact in R2.
+ * Serving Plane: user-facing function URLs executed on the owning agent.
  *
  *   GET|POST|… /invoke/:deploymentId[/*]  — immutable per-deployment URL
  *   GET|POST|… /w/:workerName[/*]         — stable alias, latest *built* deployment
  *
- * Each hit pulls the artifact from R2 (cached in memory), runs it in an
- * isolated worker thread with a timeout, and returns the module's stdout as
- * `text/plain`. Request context reaches the module via WASI env
- * (HC_METHOD/HC_PATH/HC_QUERY) and stdin (raw body, ≤1MB).
+ * Each hit is forwarded to the deployment's agent over its open SSE stream
+ * (`event: invoke`); the agent runs the wasm locally (wasmtime) and POSTs
+ * the result back to /invocations/:id/result, which releases the waiting
+ * HTTP response. The server never executes wasm itself.
  */
 
 function subPath(req: Request, stripPrefix: RegExp) {
@@ -25,6 +25,17 @@ function subPath(req: Request, stripPrefix: RegExp) {
   return path.replace(stripPrefix, "") || "/";
 }
 
+function decodeStdout(result: AgentInvokeResult): Buffer {
+  if (result.stdoutB64) {
+    try {
+      return Buffer.from(result.stdoutB64, "base64");
+    } catch {
+      // fall through to plain-text field
+    }
+  }
+  return Buffer.from(result.stdout ?? "", "utf8");
+}
+
 async function serve(record: DeploymentRecord, hcPath: string, req: Request, res: Response) {
   if (!record.artifactKey) {
     return res.status(409).json({
@@ -35,37 +46,45 @@ async function serve(record: DeploymentRecord, hcPath: string, req: Request, res
     });
   }
 
-  let wasm: Buffer;
-  try {
-    wasm = await fetchArtifactBytes(record);
-  } catch (error) {
-    console.error("invoke: artifact fetch failed:", error);
-    return res.status(502).json({ error: "Failed to load wasm artifact from R2" });
-  }
-
   const query = req.originalUrl.includes("?") ? req.originalUrl.slice(req.originalUrl.indexOf("?") + 1) : "";
-  const result = await runWasm(wasm, {
-    env: {
-      HC_METHOD: req.method,
-      HC_PATH: hcPath.slice(0, 2000),
-      HC_QUERY: query.slice(0, 2000),
-    },
-    stdin: Buffer.isBuffer(req.body) ? (req.body as Buffer) : undefined,
+  const body = Buffer.isBuffer(req.body) ? (req.body as Buffer) : undefined;
+
+  const outcome = await invokeOnAgent({
+    machineId: record.machineId,
+    deploymentId: record.deploymentId,
+    workerName: record.workerName,
+    artifactKey: record.artifactKey,
+    method: req.method,
+    path: hcPath.slice(0, 2000),
+    query: query.slice(0, 2000),
+    bodyB64: body && body.length ? body.toString("base64") : undefined,
   });
 
   res.setHeader("x-hypercore-deployment", record.deploymentId);
   res.setHeader("x-hypercore-worker", record.workerName);
+  res.setHeader("x-hypercore-node", record.machineId);
 
-  if (result.timedOut) return res.status(504).json({ error: result.error });
+  if (!outcome.delivered) {
+    return res.status(503).json({
+      error: "Node is offline (no open SSE stream)",
+      machineId: record.machineId,
+      deploymentId: record.deploymentId,
+    });
+  }
+  if (outcome.timeout) {
+    return res.status(504).json({ error: "Node did not respond in time" });
+  }
+
+  const result = outcome.result;
   if (!result.ok || result.code !== 0) {
     return res.status(502).json({
       error: result.error ?? `Function exited with code ${result.code}`,
-      stdout: result.stdout.slice(0, 1000),
+      stdout: decodeStdout(result).toString("utf8").slice(0, 1000),
       stderr: result.stderr ?? "",
     });
   }
   res.setHeader("x-hypercore-exit-code", "0");
-  return res.type("text/plain").send(result.stdout);
+  return res.type("text/plain").send(decodeStdout(result));
 }
 
 const rawBody = express.raw({ type: "*/*", limit: "1mb" });

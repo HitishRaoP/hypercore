@@ -79,21 +79,32 @@ export function listOnlineAgents() {
 }
 
 /**
+ * Scheduler routing: deliver an event to exactly one agent.
+ * Returns false when the target agent has no open SSE stream.
+ */
+export function pushEvent(machineId: string, event: string, data: unknown) {
+  const conn = agents.get(machineId);
+  if (!conn) return false;
+  try {
+    sseWrite(conn.res, event, data);
+    return true;
+  } catch (error) {
+    console.error(`[scheduler] failed to push ${event} to ${machineId}:`, error);
+    removeAgent(machineId);
+    return false;
+  }
+}
+
+/**
  * Scheduler routing: deliver a deployment to exactly one agent.
  * Returns false when the target agent has no open SSE stream.
  */
 export function pushDeployment(payload: DeploymentPayload) {
-  const conn = agents.get(payload.machineId);
-  if (!conn) return false;
-  try {
-    sseWrite(conn.res, "deployment", payload);
+  const ok = pushEvent(payload.machineId, "deployment", payload);
+  if (ok) {
     console.log(
       `[scheduler] routed deployment ${payload.deploymentId} -> ${payload.machineId}`,
     );
-    return true;
-  } catch (error) {
-    console.error(`[scheduler] failed to route to ${payload.machineId}:`, error);
-    removeAgent(payload.machineId);
-    return false;
   }
+  return ok;
 }
