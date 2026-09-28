@@ -8,7 +8,7 @@ export function RegistrationForm({
 }: {
   onRegister: (url: string) => Promise<void>;
 }) {
-  const [url, setUrl] = useState("http://127.0.0.1:8080");
+  const [url, setUrl] = useState("https://hypercore.cursent.com");
   const [loading, setLoading] = useState(false);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
