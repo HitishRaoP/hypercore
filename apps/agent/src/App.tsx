@@ -7,7 +7,7 @@ import { LiveMetricsDashboard } from "./components/LiveMetricsDashboard";
 import { MachineDetailsCard } from "./components/MachineDetailsCard";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { Button } from "./components/ui/Button";
-import type { MachineInfo, MetricsTick, RegistrationResponse } from "./types";
+import type { MachineInfo, MetricsTick, RegistrationResponse, ToolchainStatus } from "./types";
 import "./App.css";
 
 function App() {
@@ -22,6 +22,12 @@ function App() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [toolchain, setToolchain] = useState<ToolchainStatus | null>(null);
+  useEffect(() => {
+    invoke<ToolchainStatus>("get_toolchain_status")
+      .then(setToolchain)
+      .catch(() => null);
+  }, []);
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     void listen<MetricsTick>("metrics_tick", (event) =>
@@ -81,6 +87,10 @@ function App() {
             <p className="mt-3 max-w-sm text-sm leading-6 text-zinc-500">
               Collect local capacity and network details before connecting this
               worker to the HyperCore coordinator.
+            </p>
+            <p className="mt-4 font-mono text-[11px] text-zinc-600">
+              Build tools (bundled): esbuild {toolchain?.esbuild ? "✓" : "…"} ·
+              javy {toolchain?.javy ? "✓" : "…"}
             </p>
             <Button
               loading={loading}

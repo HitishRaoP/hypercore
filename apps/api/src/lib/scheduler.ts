@@ -23,10 +23,18 @@ import type { Response } from "express";
  *   server-side in the scheduler, exactly as requested.
  */
 
+export interface DeploymentFileRef {
+  name: string;
+  key: string;
+}
+
 export interface DeploymentPayload {
   deploymentId: string;
   machineId: string;
   objectKey: string;
+  workerName?: string;
+  entrypoint?: string;
+  files?: DeploymentFileRef[];
 }
 
 type AgentConnection = {

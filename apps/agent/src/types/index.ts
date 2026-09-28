@@ -8,3 +8,4 @@ export interface RegistrationResponse {
   status: string; nodeId: string; sessionToken: string; assignedRegion: string; heartbeatIntervalSecs: number;
 }
 export interface MetricsTick { cpuPercent: number; usedMemoryMb: number; totalMemoryMb: number; }
+export interface ToolchainStatus { esbuild: string | null; javy: string | null; }

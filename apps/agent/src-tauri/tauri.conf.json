@@ -28,6 +28,7 @@
     "targets": "all",
     "icon": [
       "icons/icon.ico"
-    ]
+    ],
+    "resources": ["resources/tools"]
   }
 }

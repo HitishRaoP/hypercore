@@ -9,3 +9,11 @@ export const S3 = new S3Client({
     secretAccessKey: env.CLOUDFLARE_SECRET_ACCESS_KEY,
   },
 });
+
+export const R2_BUCKET = env.R2_BUCKET;
+
+export const rawKeyFor = (deploymentId: string, filename: string) =>
+  `raw/${deploymentId}/${filename}`;
+
+export const artifactKeyFor = (deploymentId: string) =>
+  `artifacts/${deploymentId}/worker.wasm`;

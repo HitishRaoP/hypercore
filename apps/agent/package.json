@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "fetch:tools": "bun ./scripts/fetch-tools.mjs",
+    "fetch:tools:check": "bun ./scripts/fetch-tools.mjs --check",
+    "build:installer": "bun run fetch:tools && tauri build",
+    "postinstall": "bun ./scripts/fetch-tools.mjs --tolerant"
   },
   "dependencies": {
     "react": "^19.1.0",

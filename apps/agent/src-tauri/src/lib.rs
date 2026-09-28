@@ -1,13 +1,16 @@
 mod machine_info;
 mod sse;
+mod tools;
 
 use machine_info::{collect_metrics, MachineInfo};
 use serde::{Deserialize, Serialize};
 use sse::SseConfig;
+use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager};
+pub use tools::ToolchainStatus;
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,15 +37,32 @@ fn set_sse_worker(handle: tauri::async_runtime::JoinHandle<()>) {
     }
 }
 
-fn connect_to_scheduler(coordinator_url: String, machine_id: String) {
+fn connect_to_scheduler(app: &tauri::AppHandle, coordinator_url: String, machine_id: String) {
     let config = SseConfig {
         coordinator_url,
         machine_id,
+        tools_dir: bundled_tools_dir(app),
     };
     let handle = tauri::async_runtime::spawn(async move {
         sse::start_worker(config).await;
     });
     set_sse_worker(handle);
+}
+
+/// Where the bundled `esbuild`/`javy` helpers live in an installed app:
+/// `<resource_dir>/tools` (see `bundle.resources` in tauri.conf.json).
+/// `tools::resolve_tool` additionally probes the exe directory and `PATH`,
+/// so dev (`tauri dev`) and bare-PATH setups keep working.
+fn bundled_tools_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
+    app.path()
+        .resource_dir()
+        .map(|dir| dir.join("tools"))
+        .ok()
+}
+
+#[tauri::command]
+fn get_toolchain_status(app: tauri::AppHandle) -> ToolchainStatus {
+    tools::toolchain_status(bundled_tools_dir(&app).as_deref())
 }
 
 #[tauri::command]
@@ -89,7 +109,7 @@ async fn register_node(
 
     // The agent opens an outbound SSE stream to the scheduler.
     // No broker credentials are read, stored, or required.
-    connect_to_scheduler(coordinator_url, machine.machine_id);
+    connect_to_scheduler(&app, coordinator_url, machine.machine_id);
 
     let _ = app.emit("node_registered", &registration);
     Ok(registration)
@@ -160,7 +180,11 @@ pub fn run() {
                 let _ = window.hide();
             }
         })
-        .invoke_handler(tauri::generate_handler![get_machine_info, register_node])
+        .invoke_handler(tauri::generate_handler![
+            get_machine_info,
+            register_node,
+            get_toolchain_status
+        ])
         .run(tauri::generate_context!())
         .expect("error while running HyperCore worker agent");
 }
