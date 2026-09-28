@@ -9,6 +9,10 @@ export const deployments = pgTable("deployments", {
   status: text("status").notNull().default("uploaded"),
   artifactKey: text("artifact_key"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export type DeploymentRow = typeof deployments.$inferSelect;

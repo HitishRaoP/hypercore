@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { AlertCircle, ArrowRight, ScanSearch } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ActivityView } from "./components/ActivityView";
 import { Header } from "./components/Header";
 import { LiveMetricsDashboard } from "./components/LiveMetricsDashboard";
 import { MachineDetailsCard } from "./components/MachineDetailsCard";
@@ -23,6 +24,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [toolchain, setToolchain] = useState<ToolchainStatus | null>(null);
+  const [coordinatorUrl, setCoordinatorUrl] = useState("");
+  const [tab, setTab] = useState<"activity" | "metrics">("activity");
   useEffect(() => {
     invoke<ToolchainStatus>("get_toolchain_status")
       .then(setToolchain)
@@ -52,14 +55,15 @@ function App() {
       setLoading(false);
     }
   };
-  const register = async (coordinatorUrl: string) => {
+  const register = async (url: string) => {
     setError("");
     try {
       setRegistration(
         await invoke<RegistrationResponse>("register_node", {
-          coordinatorUrl,
+          coordinatorUrl: url,
         }),
       );
+      setCoordinatorUrl(url);
     } catch (reason) {
       const message =
         reason instanceof Error
@@ -103,7 +107,26 @@ function App() {
             </Button>
           </div>
         ) : registration ? (
-          <LiveMetricsDashboard metrics={metrics} registration={registration} />
+          <div className="space-y-5">
+            <div className="flex gap-1 rounded-lg border border-zinc-800 bg-[#0a0a0a] p-1">
+              {(["activity", "metrics"] as const).map((name) => (
+                <button
+                  key={name}
+                  onClick={() => setTab(name)}
+                  className={`flex-1 rounded-md px-3 py-1.5 text-xs capitalize transition-colors ${
+                    tab === name ? "bg-zinc-800 text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            {tab === "activity" ? (
+              <ActivityView coordinatorUrl={coordinatorUrl} machineId={info.machineId} />
+            ) : (
+              <LiveMetricsDashboard metrics={metrics} registration={registration} />
+            )}
+          </div>
         ) : (
           <div className="space-y-5">
             <div>

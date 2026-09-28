@@ -4,6 +4,7 @@ import cors from "cors";
 import codeUploadRouter from "./routers/code-upload.router";
 import deploymentRouter from "./routers/deployment.router";
 import agentsRouter from "./routers/agents.router";
+import activityRouter from "./routers/activity.router";
 import invocationsRouter from "./routers/invocations.router";
 import { invokeRouter, workerRouter } from "./routers/invoke.router";
 
@@ -25,6 +26,8 @@ app.use("/code-upload", codeUploadRouter);
 app.use("/deployment", deploymentRouter);
 
 app.use("/agents", agentsRouter);
+
+app.use("/activity", activityRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hypercore api is up!" });

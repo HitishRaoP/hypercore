@@ -1,10 +1,13 @@
+import { persistDeploymentInsert, persistDeploymentUpdate } from "./db";
+
 /**
  * In-memory deployment metadata store (Control Plane).
  *
  * Postgres persistence is best-effort (see tryPersist below): the upload
  * flow must keep working locally even when DATABASE_URL is unset, so the
  * scheduler + R2 path never blocks on the DB. When DATABASE_URL is set we
- * attempt a `deployments` insert and log failures instead of 500ing.
+ * mirror inserts/updates into the `deployments` table and log failures
+ * instead of 500ing.
  */
 
 export interface DeploymentFile {
@@ -52,6 +55,7 @@ export function updateDeployment(
   if (!existing) return undefined;
   const next = { ...existing, ...patch };
   deployments.set(deploymentId, next);
+  void persistDeploymentUpdate(deploymentId, patch);
   return next;
 }
 
@@ -65,28 +69,21 @@ export function getLatestByWorkerName(workerName: string) {
   return best;
 }
 
+export function listDeployments(machineId: string, limit: number) {
+  return [...deployments.values()]
+    .filter((record) => record.machineId === machineId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, Math.max(limit, 1));
+}
+
 async function tryPersist(record: DeploymentRecord) {
-  if (!process.env.DATABASE_URL) return;
-  try {
-    // Dynamic, untyped import so @hypercore/db never blocks `tsc` when its
-    // dist has not been built yet. Postgres is best-effort metadata only.
-    const loader = new Function("return import('@hypercore/db')") as () => Promise<{
-      db: { insert: (t: unknown) => { values: (v: unknown) => Promise<unknown> } };
-    }>;
-    const schemaLoader = new Function("return import('@hypercore/db/schema/deployments')") as () => Promise<{
-      deployments: unknown;
-    }>;
-    const [{ db }, { deployments: table }] = await Promise.all([loader(), schemaLoader()]);
-    await db.insert(table).values({
-      id: record.deploymentId,
-      workerName: record.workerName,
-      machineId: record.machineId,
-      entrypoint: record.entrypoint,
-      files: record.files,
-      status: record.status,
-      artifactKey: record.artifactKey ?? null,
-    });
-  } catch (error) {
-    console.warn("[store] postgres persist skipped:", (error as Error).message);
-  }
+  await persistDeploymentInsert({
+    id: record.deploymentId,
+    workerName: record.workerName,
+    machineId: record.machineId,
+    entrypoint: record.entrypoint,
+    files: record.files,
+    status: record.status,
+    artifactKey: record.artifactKey ?? null,
+  });
 }
