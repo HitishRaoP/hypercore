@@ -1,4 +1,4 @@
-import { Activity, Boxes, MemoryStick, Server } from "lucide-react";
+import { Activity, MemoryStick } from "lucide-react";
 import type { MetricsTick, RegistrationResponse } from "../types";
 import { Badge } from "./ui/Badge";
 import { Card } from "./ui/Card";
@@ -40,7 +40,6 @@ function Gauge({
 }
 export function LiveMetricsDashboard({
   metrics,
-  registration,
 }: {
   metrics: MetricsTick;
   registration: RegistrationResponse;

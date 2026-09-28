@@ -1,0 +1,152 @@
+name: Release agent
+
+# Cutting a release:
+#   1. (optional, keeps repo files in sync)  bun ./apps/agent/scripts/sync-agent-version.mjs 0.2.0
+#   2. git tag v0.2.0 && git push origin v0.2.0
+#   3. This workflow builds the Tauri agent on Windows / macOS / Linux and
+#      attaches the installers to the GitHub Release for that tag.
+# Or: run it manually from the Actions tab with a version input — the
+# `prepare` job creates and pushes the tag for you.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.2.0 or v0.2.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  GITHUB_OWNER: HitishRaoP
+  GITHUB_REPO: hypercore
+
+jobs:
+  prepare:
+    name: Resolve release tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      created: ${{ steps.resolve.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TAG="$INPUT_VERSION"
+            case "$TAG" in
+              v*) ;;
+              *) TAG="v$TAG" ;;
+            esac
+            if ! echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'; then
+              echo "Invalid version: $INPUT_VERSION (expected e.g. 0.2.0)" >&2
+              exit 1
+            fi
+            if git rev-parse "$TAG" >/dev/null 2>&1; then
+              echo "Tag $TAG already exists, reusing it." >&2
+              CREATED=false
+            else
+              git tag "$TAG"
+              git push origin "$TAG"
+              CREATED=true
+            fi
+          else
+            TAG="$REF_NAME"
+            CREATED=false
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "created=$CREATED" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build agent (${{ matrix.os }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: ""
+          - os: macos-latest
+            args: "--target universal-apple-darwin"
+          - os: ubuntu-22.04
+            args: ""
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # When dispatched manually the checkout is on main; fetch the tag instead.
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.5"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/agent/src-tauri -> target
+          shared-key: agent-${{ runner.os }}
+
+      # Single source of truth: the tag (e.g. v0.2.0) overwrites the version in
+      # package.json, tauri.conf.json and Cargo.toml so all three agree.
+      - name: Sync agent version from tag
+        run: bun ./apps/agent/scripts/sync-agent-version.mjs "${{ needs.prepare.outputs.tag }}"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Each per-OS runner fetches native javy/esbuild binaries so they ship
+      # inside that OS's installer (see apps/agent/scripts/fetch-tools.mjs).
+      - name: Fetch bundled toolchain
+        working-directory: apps/agent
+        run: bun run fetch:tools
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/agent
+          tagName: ${{ needs.prepare.outputs.tag }}
+          releaseName: "Hypercore Agent ${{ needs.prepare.outputs.tag }}"
+          releaseBody: "See the assets below to download the Hypercore Agent for your OS."
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
