@@ -25,11 +25,9 @@ serde_json = "1"
 sysinfo = "0.33"
 machine-uid = "0.5"
 local-ip-address = "0.6"
-tokio = { version = "1", features = ["time"] }
-reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["time", "rt", "macros", "io-util"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
 uuid = { version = "1.10", features = ["v4"] }
 dirs = "5.0"
-
-lapin = "4.11"
 futures-util = "0.3"
-dotenvy = "0.15"
+tokio-util = { version = "0.7", features = ["io"] }

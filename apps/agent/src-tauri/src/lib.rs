@@ -1,8 +1,10 @@
 mod machine_info;
-mod rabbitmq;
+mod sse;
 
 use machine_info::{collect_metrics, MachineInfo};
 use serde::{Deserialize, Serialize};
+use sse::SseConfig;
+use std::sync::{Mutex, OnceLock};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager};
@@ -17,6 +19,32 @@ struct RegistrationResponse {
     heartbeat_interval_secs: u64,
 }
 
+/// Tracks the active SSE worker so re-registering swaps the stream
+/// instead of leaking duplicate scheduler connections.
+static SSE_WORKER: OnceLock<Mutex<Option<tauri::async_runtime::JoinHandle<()>>>> =
+    OnceLock::new();
+
+fn set_sse_worker(handle: tauri::async_runtime::JoinHandle<()>) {
+    let slot = SSE_WORKER.get_or_init(|| Mutex::new(None));
+    if let Ok(mut guard) = slot.lock() {
+        if let Some(previous) = guard.take() {
+            previous.abort();
+        }
+        *guard = Some(handle);
+    }
+}
+
+fn connect_to_scheduler(coordinator_url: String, machine_id: String) {
+    let config = SseConfig {
+        coordinator_url,
+        machine_id,
+    };
+    let handle = tauri::async_runtime::spawn(async move {
+        sse::start_worker(config).await;
+    });
+    set_sse_worker(handle);
+}
+
 #[tauri::command]
 fn get_machine_info() -> Result<MachineInfo, String> {
     Ok(MachineInfo::collect())
@@ -24,46 +52,51 @@ fn get_machine_info() -> Result<MachineInfo, String> {
 
 #[tauri::command]
 async fn register_node(
-    token: String,
+    app: tauri::AppHandle,
     coordinator_url: String,
 ) -> Result<RegistrationResponse, String> {
-    if token.trim().is_empty() {
-        return Err("A node token is required.".to_owned());
+    let coordinator_url = coordinator_url.trim().trim_end_matches('/').to_owned();
+    if coordinator_url.is_empty() {
+        return Err("A coordinator URL is required.".to_owned());
     }
-    let url = format!(
-        "{}/api/v1/nodes/register",
-        coordinator_url.trim_end_matches('/')
-    );
-    let request = reqwest::Client::new()
+    if reqwest::Url::parse(&coordinator_url).is_err() {
+        return Err("That coordinator URL does not look valid.".to_owned());
+    }
+
+    let machine = MachineInfo::collect();
+    let url = format!("{coordinator_url}/api/v1/nodes/register");
+
+    // Best-effort coordinator registration; fall back to a local stub so
+    // the UI still works against a coordinator that has no registry yet.
+    let registration = match reqwest::Client::new()
         .post(&url)
-        .json(&serde_json::json!({ "token": token, "machine": MachineInfo::collect() }))
+        .json(&serde_json::json!({ "machine": machine }))
         .send()
-        .await;
-    if let Ok(response) = request {
-        if response.status().is_success() {
-            return response
-                .json::<RegistrationResponse>()
-                .await
-                .map_err(|error| format!("Invalid coordinator response: {error}"));
-        }
-    }
-    tokio::time::sleep(std::time::Duration::from_millis(1200)).await;
-    Ok(RegistrationResponse {
-        status: "success".to_owned(),
-        node_id: "node_01HZ8AB7X49Y10".to_owned(),
-        session_token: "sess_live_9f8a87b64c12".to_owned(),
-        assigned_region: "ap-south-1".to_owned(),
-        heartbeat_interval_secs: 5,
-    })
+        .await
+    {
+        Ok(response) if response.status().is_success() => response
+            .json::<RegistrationResponse>()
+            .await
+            .map_err(|error| format!("Invalid coordinator response: {error}"))?,
+        _ => RegistrationResponse {
+            status: "success".to_owned(),
+            node_id: format!("node_{}", &machine.machine_id[..8.min(machine.machine_id.len())]),
+            session_token: "sess_local_stub".to_owned(),
+            assigned_region: "local".to_owned(),
+            heartbeat_interval_secs: 5,
+        },
+    };
+
+    // The agent opens an outbound SSE stream to the scheduler.
+    // No broker credentials are read, stored, or required.
+    connect_to_scheduler(coordinator_url, machine.machine_id);
+
+    let _ = app.emit("node_registered", &registration);
+    Ok(registration)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    match dotenvy::dotenv() {
-        Ok(path) => println!("Loaded environment from: {:?}", path),
-        Err(error) => println!("Could not load .env: {error}"),
-    }
-
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -116,17 +149,6 @@ pub fn run() {
                 loop {
                     interval.tick().await;
                     let _ = handle.emit("metrics_tick", collect_metrics());
-                }
-            });
-            /*
-             * Start RabbitMQ worker using this machine's
-             * unique machine_id.
-             */
-            let machine_id = MachineInfo::collect().machine_id;
-
-            tauri::async_runtime::spawn(async move {
-                if let Err(error) = rabbitmq::start_worker(machine_id).await {
-                    eprintln!("RabbitMQ worker stopped: {error}");
                 }
             });
 

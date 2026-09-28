@@ -46,12 +46,11 @@ function App() {
       setLoading(false);
     }
   };
-  const register = async (token: string, coordinatorUrl: string) => {
+  const register = async (coordinatorUrl: string) => {
     setError("");
     try {
       setRegistration(
         await invoke<RegistrationResponse>("register_node", {
-          token,
           coordinatorUrl,
         }),
       );

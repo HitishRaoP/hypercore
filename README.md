@@ -37,7 +37,7 @@ Responsible for:
 * Managing deployments
 * Registering execution machines
 * Uploading source files
-* Sending messages to RabbitMQ
+* Routing deployment requests to agents via the in-process scheduler (SSE)
 
 #### Storage
 
@@ -50,16 +50,30 @@ Responsible for:
 
 The message plane handles communication between the control plane and execution machines.
 
-**RabbitMQ** is used as the message broker.
+It is an **in-process scheduler with Server-Sent Events (SSE)** — no external
+broker, so the installable agent needs no RabbitMQ credentials.
 
-Each execution machine has a unique `machineId` and an associated queue.
+Each execution machine opens one outbound SSE stream:
+
+```text
+GET /agents/events?machineId=<machine-id>
+```
+
+The scheduler keeps that stream open and routes each deployment or function
+request to the selected machine by writing an event into its stream:
+
+```text
+event: deployment
+data: {"deploymentId":"...","machineId":"...","objectKey":"..."}
+```
 
 The scheduler:
 
 1. Receives a deployment or function request.
 2. Selects an available execution machine.
-3. Routes the request to that machine's queue.
+3. Routes the request down that machine's open SSE stream.
 
+Agents acknowledge over plain HTTP (`POST /deployment/:id/ack`).
 This allows multiple machines to process workloads independently.
 
 ---
@@ -70,7 +84,7 @@ The execution plane consists of computers running the **Hypercore Agent**.
 
 The agent is responsible for:
 
-* Consuming messages from RabbitMQ
+* Opening an outbound SSE stream to the scheduler (no broker credentials)
 * Downloading function files from R2
 * Building TypeScript
 * Converting JavaScript to WebAssembly using **Javy**
@@ -97,9 +111,9 @@ When the user deploys a function:
 
 * A deployment is created.
 * Deployment metadata is stored in PostgreSQL.
-* A deployment request is sent to RabbitMQ.
-* The scheduler selects an available execution machine.
-* The Hypercore Agent receives the deployment request.
+* The scheduler selects an available execution machine and routes the
+  deployment down its open SSE stream (`POST /deployment`).
+* The Hypercore Agent receives the deployment event.
 * The agent downloads the source files from R2.
 * TypeScript is built into JavaScript.
 * Javy converts the JavaScript into WebAssembly.
@@ -111,7 +125,7 @@ After deployment:
 
 * An invocation request is sent to the control plane.
 * The scheduler selects an available machine running the deployed function.
-* The request is routed through RabbitMQ.
+* The request is routed down that machine's SSE stream.
 * The Hypercore Agent executes the function.
 * The result is returned to the caller.
 
