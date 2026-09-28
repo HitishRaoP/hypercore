@@ -29,7 +29,7 @@ import {
 } from "node:fs";
 import { chmod, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
 import { Readable } from "node:stream";
@@ -129,19 +129,23 @@ async function fetchEsbuild(dest) {
   }
 }
 
-function toTarPath(p) {
-  // GNU tar treats `C:\...` as a remote host; forward slashes + --force-local
-  // avoid that. Unix tars take plain paths.
-  return process.platform === "win32" ? p.replace(/\\/g, "/") : p;
-}
-
 async function extractTgz(tgzPath, destDir, member) {
-  const args =
-    process.platform === "win32"
-      ? ["--force-local", "-xzf", toTarPath(tgzPath), "-C", toTarPath(destDir), member]
-      : ["-xzf", tgzPath, "-C", destDir, member];
-  // bsdtar ships with Windows 10+ and exists as `tar` on macOS/Linux.
-  execFileSync("tar", args, { stdio: "ignore" });
+  // Run tar with cwd + relative paths so no drive-letter absolute path ever
+  // reaches it. GNU tar mistakes `C:\...`/`C:/...` for a remote host (which
+  // needs the GNU-only --force-local flag), while bsdtar — the tar.exe that
+  // ships with Windows — rejects --force-local outright. Relative paths work
+  // identically on both, so neither flavor needs special flags.
+  try {
+    execFileSync("tar", ["-xzf", basename(tgzPath), member], {
+      cwd: destDir,
+      stdio: "pipe",
+    });
+  } catch (error) {
+    const detail = Buffer.isBuffer(error?.stderr)
+      ? error.stderr.toString("utf8").trim()
+      : (error?.message ?? String(error));
+    throw new Error(`tar extract failed (${member}): ${detail}`);
+  }
 }
 
 async function ensureTool(base, fetcher, wantVersion) {
@@ -189,7 +193,18 @@ async function main() {
 try {
   await main();
 } catch (error) {
-  console.error(`[fetch-tools] FAILED: ${error?.message ?? error}`);
+  const detail =
+    error?.message ??
+    (Buffer.isBuffer(error?.stderr)
+      ? error.stderr.toString("utf8").trim()
+      : null) ??
+    String(error);
+  console.error(`[fetch-tools] FAILED: ${detail}`);
+  if (error?.code ?? error?.status) {
+    console.error(
+      `[fetch-tools] exit code=${error?.status ?? "?"} errno=${error?.code ?? "?"}`,
+    );
+  }
   console.error(error?.stack ?? "(no stack)");
   if (!TOLERANT) process.exit(1);
 }
