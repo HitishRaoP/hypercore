@@ -92,9 +92,9 @@ function App() {
               Collect local capacity and network details before connecting this
               worker to the HyperCore coordinator.
             </p>
-            <p className="mt-4 font-mono text-[11px] text-zinc-600">
-              Build tools (bundled): esbuild {toolchain?.esbuild ? "✓" : "…"} ·
-              javy {toolchain?.javy ? "✓" : "…"}
+            <p className="mt-4 max-w-sm font-mono text-[11px] leading-5 break-all text-zinc-600">
+              Build tools (bundled): esbuild {toolchain?.esbuild ?? "missing"} ·
+              javy {toolchain?.javy ?? "missing"}
             </p>
             <Button
               loading={loading}

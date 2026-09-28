@@ -50,15 +50,19 @@ fn connect_to_scheduler(app: &tauri::AppHandle, coordinator_url: String, machine
     set_sse_worker(handle);
 }
 
-/// Where the bundled `esbuild`/`javy` helpers live in an installed app:
-/// `<resource_dir>/tools` (see `bundle.resources` in tauri.conf.json).
-/// `tools::resolve_tool` additionally probes the exe directory and `PATH`,
-/// so dev (`tauri dev`) and bare-PATH setups keep working.
+/// Where the bundled `esbuild`/`javy` helpers live in an installed app.
+/// `bundle.resources = ["resources/tools"]` preserves the `resources/` prefix,
+/// so installs carry `<resource_dir>/resources/tools`, while dev and flat
+/// layouts use `<resource_dir>/tools`. Prefer whichever actually exists;
+/// `tools::resolve_tool` additionally probes the exe directory and `PATH`.
 fn bundled_tools_dir(app: &tauri::AppHandle) -> Option<PathBuf> {
-    app.path()
-        .resource_dir()
-        .map(|dir| dir.join("tools"))
-        .ok()
+    let resource = app.path().resource_dir().ok()?;
+    for cand in [resource.join("tools"), resource.join("resources/tools")] {
+        if cand.is_dir() {
+            return Some(cand);
+        }
+    }
+    Some(resource.join("tools"))
 }
 
 #[tauri::command]

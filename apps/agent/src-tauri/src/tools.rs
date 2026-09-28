@@ -38,6 +38,9 @@ fn candidate_dirs(explicit_tools_dir: Option<&Path>) -> Vec<PathBuf> {
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             dirs.push(dir.join("tools"));
+            // Installed layouts that preserve the `resources/` prefix
+            // (`<exe>/resources/tools`, e.g. Tauri `bundle.resources`).
+            dirs.push(dir.join("resources/tools"));
             dirs.push(dir.to_owned());
             dirs.push(dir.join("../Resources/tools"));
             dirs.push(dir.join("../Resources"));
@@ -69,6 +72,15 @@ fn find_on_path(name: &str) -> Option<PathBuf> {
     None
 }
 
+/// Every filesystem location probed for `base` (for diagnostics).
+pub fn searched_locations(explicit_tools_dir: Option<&Path>, base: &str) -> Vec<PathBuf> {
+    let name = exe_name(base);
+    candidate_dirs(explicit_tools_dir)
+        .into_iter()
+        .map(|dir| dir.join(&name))
+        .collect()
+}
+
 /// Resolve a helper binary (`"javy"` / `"esbuild"`): bundled copy first,
 /// then `PATH`. Returns an absolute path (or bare name when only PATH matches
 /// via lookup failure — here always absolute since we check `is_file`).
@@ -89,5 +101,30 @@ pub fn toolchain_status(explicit_tools_dir: Option<&Path>) -> ToolchainStatus {
             .map(|p| p.to_string_lossy().into_owned()),
         javy: resolve_tool(explicit_tools_dir, "javy")
             .map(|p| p.to_string_lossy().into_owned()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The installed layout preserves the `resources/` prefix
+    /// (`<install>/resources/tools/javy.exe`) — the search must probe it,
+    /// otherwise installs never find the bundled helpers (dev checkouts
+    /// mask this via the `src-tauri/resources/tools` ancestor fallback).
+    #[test]
+    fn candidate_dirs_cover_install_layouts() {
+        let explicit = Path::new("/fake/res/tools");
+        let dirs = candidate_dirs(Some(explicit));
+        assert!(dirs.contains(&PathBuf::from("/fake/res/tools")));
+        assert!(dirs.contains(&PathBuf::from("/fake/res")));
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(dir) = exe.parent() {
+                assert!(dirs.contains(&dir.join("tools")));
+                assert!(dirs.contains(&dir.join("resources/tools")));
+            }
+        }
+        let probed = searched_locations(Some(explicit), "javy");
+        assert!(probed.contains(&PathBuf::from("/fake/res/tools/javy.exe")));
     }
 }

@@ -16,6 +16,11 @@ use wasmtime_wasi::{I32Exit, WasiCtxBuilder};
 pub const MAX_STDOUT_BYTES: usize = 4_000_000;
 /// Fuel backstop against runaway compute (wall-clock epoch is the primary guard).
 const FUEL: u64 = 2_000_000_000;
+/// Bare wasm header with no exports. Older agent builds uploaded this as
+/// `worker.wasm` when javy was unavailable at deploy time; it compiles but
+/// has no `_start`. Detect it exactly so invocations fail with an actionable
+/// message instead of `missing _start`.
+const PLACEHOLDER_WASM: [u8; 8] = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
 
 pub struct ExecInput {
     pub wasm: Vec<u8>,
@@ -50,6 +55,11 @@ impl std::fmt::Display for ExecError {
 /// Execute one invocation synchronously. Call from `spawn_blocking` — this
 /// blocks the calling thread for the duration of the run.
 pub fn execute(input: ExecInput) -> Result<ExecOutput, ExecError> {
+    if input.wasm == PLACEHOLDER_WASM {
+        return Err(ExecError::Failed(
+            "artifact is an empty placeholder wasm (the build toolchain was unavailable when it was deployed); redeploy the function".to_owned(),
+        ));
+    }
     let mut config = Config::new();
     config.consume_fuel(true);
     config.epoch_interruption(true);

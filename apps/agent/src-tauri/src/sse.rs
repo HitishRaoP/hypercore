@@ -218,8 +218,8 @@ async fn bundle_ts_to_js(
 }
 
 /// JS -> wasm via the bundled javy (`javy build bundle.js -o worker.wasm`).
-/// Falls back to a placeholder file so the upload step still runs when the
-/// helper is missing (dev machines without `fetch:tools`).
+/// A javy failure is fatal for the deployment: uploading a stand-in artifact
+/// would report "done" yet fail every invocation with `missing _start`.
 async fn compile_js_to_wasm(
     js: &Path,
     out_wasm: &Path,
@@ -237,28 +237,21 @@ async fn compile_js_to_wasm(
         Ok(o) if o.status.success() => Ok(format!("compiled with javy ({javy})")),
         Ok(o) => {
             let reason = String::from_utf8_lossy(&o.stderr).trim().to_owned();
-            write_placeholder_wasm(out_wasm).await?;
-            Ok(format!("javy ({javy}) failed ({reason}); wrote placeholder wasm"))
+            Err(format!(
+                "javy ({javy}) failed ({reason}); check the agent's toolchain status, then reinstall the agent or run `bun run fetch:tools` (dev)"
+            ))
         }
         Err(e) => {
-            write_placeholder_wasm(out_wasm).await?;
-            Ok(format!("javy ({javy}) not runnable ({e}); wrote placeholder wasm"))
+            let searched = crate::tools::searched_locations(tools_dir, "javy")
+                .iter()
+                .map(|p| p.display().to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            Err(format!(
+                "javy not runnable ({e}); searched [{searched}] and PATH; check the agent's toolchain status, then reinstall the agent or run `bun run fetch:tools` (dev)"
+            ))
         }
     }
-}
-
-async fn write_placeholder_wasm(dest: &Path) -> Result<(), String> {
-    // Minimal valid wasm header (\0asm + version 1) so R2 always gets bytes.
-    let bytes: [u8; 8] = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
-    if let Some(parent) = dest.parent() {
-        tokio::fs::create_dir_all(parent)
-            .await
-            .map_err(|e| format!("mkdir failed: {e}"))?;
-    }
-    tokio::fs::write(dest, bytes)
-        .await
-        .map_err(|e| format!("placeholder wasm write failed: {e}"))?;
-    Ok(())
 }
 
 /// Upload the built wasm *through* the coordinator:
