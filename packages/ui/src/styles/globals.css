@@ -80,6 +80,8 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-switzer), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

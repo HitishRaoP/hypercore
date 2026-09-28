@@ -12,13 +12,11 @@ import {
 import {
   AlertCircle,
   CheckCircle2,
-  Command,
   Download,
   ExternalLink,
   FileDown,
   Loader2,
   Monitor,
-  Terminal,
 } from "lucide-react";
 
 const GITHUB_OWNER = "HitishRaoP";
@@ -43,11 +41,13 @@ interface ReleaseInfo {
 
 type Status = "loading" | "ready" | "empty" | "error";
 
-function findAsset(
-  assets: ReleaseAsset[],
-  matchers: Array<(name: string) => boolean>,
-): ReleaseAsset | undefined {
+function findWindowsAsset(assets: ReleaseAsset[]): ReleaseAsset | undefined {
   const lower = assets.map((a) => ({ asset: a, name: a.name.toLowerCase() }));
+  const matchers: Array<(name: string) => boolean> = [
+    (n) => n.includes("windows") && n.endsWith(".msi"),
+    (n) => n.endsWith("-setup.exe"),
+    (n) => n.endsWith(".exe"),
+  ];
   for (const matches of matchers) {
     const hit = lower.find(({ name }) => matches(name));
     if (hit) return hit.asset;
@@ -67,33 +67,18 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
 }
 
-function detectPlatform(): "windows" | "macos" | "linux" | null {
-  if (typeof navigator === "undefined") return null;
-  const ua = navigator.userAgent.toLowerCase();
-  if (ua.includes("win")) return "windows";
-  if (ua.includes("mac")) return "macos";
-  if (ua.includes("linux")) return "linux";
-  return null;
-}
-
-interface PlatformCard {
-  id: "windows" | "macos" | "linux";
-  title: string;
-  description: string;
-  icon: typeof Monitor;
-  asset: ReleaseAsset | undefined;
-  installHint: string;
+function isWindows(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return navigator.userAgent.toLowerCase().includes("win");
 }
 
 export const DownloadView = () => {
   const [status, setStatus] = useState<Status>("loading");
   const [release, setRelease] = useState<ReleaseInfo | null>(null);
-  const [platform, setPlatform] = useState<
-    "windows" | "macos" | "linux" | null
-  >(null);
+  const [onWindows, setOnWindows] = useState(false);
 
   useEffect(() => {
-    setPlatform(detectPlatform());
+    setOnWindows(isWindows());
     let cancelled = false;
 
     fetch(LATEST_API_URL, {
@@ -122,59 +107,22 @@ export const DownloadView = () => {
     };
   }, []);
 
-  const cards: PlatformCard[] = useMemo(() => {
-    const assets = release?.assets ?? [];
-    return [
-      {
-        id: "windows",
-        title: "Windows",
-        description: "Windows 10 and later (x64)",
-        icon: Monitor,
-        asset: findAsset(assets, [
-          (n) => n.includes("windows") && n.endsWith(".msi"),
-          (n) => n.endsWith("-setup.exe"),
-          (n) => n.endsWith(".exe"),
-        ]),
-        installHint: "Run the .msi installer and follow the setup wizard.",
-      },
-      {
-        id: "macos",
-        title: "macOS",
-        description: "Apple Silicon and Intel",
-        icon: Command,
-        asset: findAsset(assets, [
-          (n) => n.includes("macos") && n.endsWith(".dmg"),
-          (n) => n.endsWith(".dmg"),
-          (n) => n.includes("macos") && n.endsWith(".app.tar.gz"),
-        ]),
-        installHint: "Open the .dmg and drag Hypercore Agent to Applications.",
-      },
-      {
-        id: "linux",
-        title: "Linux",
-        description: "Ubuntu 22.04+ and equivalents",
-        icon: Terminal,
-        asset: findAsset(assets, [
-          (n) => n.endsWith(".appimage"),
-          (n) => n.endsWith(".deb"),
-          (n) => n.includes("linux") && n.endsWith(".app.tar.gz"),
-        ]),
-        installHint: "Make the .AppImage executable, or install the .deb.",
-      },
-    ];
-  }, [release]);
+  const windowsAsset = useMemo(
+    () => findWindowsAsset(release?.assets ?? []),
+    [release],
+  );
 
   const versionLabel = release
     ? release.name || release.tag_name
     : "No release yet";
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-2xl space-y-6 p-6">
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">Download Hypercore Agent</h1>
         <p className="text-sm text-muted-foreground">
-          Run the agent on your machine to contribute compute and execute
-          functions. Pick the installer for your OS below.
+          Run the agent on your Windows machine to contribute compute and
+          execute functions. Windows 10 and later (x64) is supported.
         </p>
       </div>
 
@@ -255,72 +203,56 @@ export const DownloadView = () => {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {cards.map((card) => {
-              const Icon = card.icon;
-              const recommended = platform === card.id;
-              return (
-                <Card key={card.id} className="relative">
-                  {recommended && (
-                    <span className="absolute -top-2.5 left-4 rounded-full border bg-background px-2 py-0.5 text-[11px] font-medium">
-                      Recommended for this device
+          <Card className="relative">
+            {onWindows && (
+              <span className="absolute -top-2.5 left-4 rounded-full border bg-background px-2 py-0.5 text-[11px] font-medium">
+                Recommended for this device
+              </span>
+            )}
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <span className="flex h-9 w-9 items-center justify-center rounded-md border">
+                  <Monitor className="h-4 w-4" />
+                </span>
+                Windows
+              </CardTitle>
+              <CardDescription>Windows 10 and later (x64)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {windowsAsset ? (
+                <>
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <FileDown className="h-3.5 w-3.5" />
+                    <span className="truncate">{windowsAsset.name}</span>
+                    <span className="shrink-0">
+                      ({formatBytes(windowsAsset.size)})
                     </span>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-md border">
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      {card.title}
-                    </CardTitle>
-                    <CardDescription>{card.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {card.asset ? (
-                      <>
-                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <FileDown className="h-3.5 w-3.5" />
-                          <span className="truncate">{card.asset.name}</span>
-                          <span className="shrink-0">
-                            ({formatBytes(card.asset.size)})
-                          </span>
-                        </p>
-                        <Button className="w-full" asChild>
-                          <a href={card.asset.browser_download_url}>
-                            <Download />
-                            Download
-                          </a>
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xs text-muted-foreground">
-                          No {card.title} installer attached to this release.
-                        </p>
-                        <Button
-                          className="w-full"
-                          variant="outline"
-                          asChild
-                        >
-                          <a
-                            href={RELEASES_URL}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <ExternalLink />
-                            Get it from GitHub
-                          </a>
-                        </Button>
-                      </>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {card.installHint}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                  </p>
+                  <Button className="w-full" asChild>
+                    <a href={windowsAsset.browser_download_url}>
+                      <Download />
+                      Download for Windows
+                    </a>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    No Windows installer attached to this release.
+                  </p>
+                  <Button className="w-full" variant="outline" asChild>
+                    <a href={RELEASES_URL} target="_blank" rel="noreferrer">
+                      <ExternalLink />
+                      Get it from GitHub
+                    </a>
+                  </Button>
+                </>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Run the .msi installer and follow the setup wizard.
+              </p>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

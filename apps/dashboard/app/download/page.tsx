@@ -4,7 +4,7 @@ import { DownloadView } from "@/modules/download/download-view";
 export const metadata: Metadata = {
   title: "Download Agent | HyperCore",
   description:
-    "Download the Hypercore Agent installer for Windows, macOS, or Linux.",
+    "Download the Hypercore Agent installer for Windows.",
 };
 
 export default function Page() {
