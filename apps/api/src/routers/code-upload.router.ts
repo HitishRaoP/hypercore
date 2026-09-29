@@ -3,6 +3,7 @@ import multer from "multer";
 import {
   getDeploymentFiles,
   getTemplate,
+  checkWorkerNameAvailability,
   proxyFile,
   uploadCode,
 } from "../controllers/code-upload.controller";
@@ -17,6 +18,7 @@ const upload = multer({
 const router = Router();
 
 router.get("/template", getTemplate);
+router.get("/check-name", checkWorkerNameAvailability);
 router.post("/", upload.array("files", 10), uploadCode);
 // NOTE: /file is defined before /:deploymentId/files so it isn't captured as an id.
 router.get("/file", proxyFile);

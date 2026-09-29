@@ -5,7 +5,6 @@ import axios from "axios";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@hypercore/ui/components/button";
-import { Input } from "@hypercore/ui/components/input";
 import {
   Card,
   CardContent,
@@ -22,15 +21,15 @@ import {
 } from "../lib/deploy";
 import { DeploySuccess } from "./deploy-success";
 import { TargetNodeSelect } from "./target-node-select";
+import { WorkerNameField, type WorkerNameStatus } from "./worker-name-field";
 
 interface HWTemplateProps {
   onBack: () => void;
 }
 
-const WORKER_URL_PREFIX = `${API_URL}/w/`;
-
 export const HWTemplate = ({ onBack }: HWTemplateProps) => {
   const [workerName, setWorkerName] = useState("long-poetry-3588");
+  const [nameStatus, setNameStatus] = useState<WorkerNameStatus>("idle");
   const [machineId, setMachineId] = useState("");
   const [nodes, setNodes] = useState<MachineNode[]>([]);
   const [loadingNodes, setLoadingNodes] = useState(true);
@@ -103,30 +102,16 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
       <CardHeader className="shrink-0">
         <h1 className="text-xl">Deploy Hello World</h1>
         <p className="text-sm text-muted-foreground">
-          Minimal TS function + package.json + bun.lock. Uploads to R2, then
-          routes to your node over SSE for the TS→JS→wasm build.
+          {"A simple Worker that returns 'Hello World!'. Perfect for getting started."}
         </p>
       </CardHeader>
 
       <CardContent className="flex-1 min-h-0 space-y-5 overflow-y-auto pb-6">
-        <div className="space-y-2">
-          <label className="text-[16px] font-medium">Worker name</label>
-          <div className="flex">
-            <span className="inline-flex h-[45px] max-w-[55%] shrink-0 items-center truncate rounded-l-xl border border-r-0 border-input bg-muted px-3 font-mono text-sm text-muted-foreground">
-              {WORKER_URL_PREFIX}
-            </span>
-            <Input
-              value={workerName}
-              onChange={(e) => setWorkerName(e.target.value)}
-              placeholder="my-worker"
-              className="h-[45px] rounded-l-none rounded-r-xl text-[16px]"
-            />
-          </div>
-          <p className="truncate font-mono text-xs text-muted-foreground">
-            Live at {WORKER_URL_PREFIX}
-            {workerName.trim() || "<name>"}
-          </p>
-        </div>
+        <WorkerNameField
+          value={workerName}
+          onChange={setWorkerName}
+          onStatusChange={setNameStatus}
+        />
 
         <div className="space-y-2">
           <label className="text-[16px] font-medium">Target node</label>
@@ -141,9 +126,6 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
 
         <div className="space-y-2">
           <label className="text-[16px] font-medium">Bundle contents</label>
-          <p className="font-mono text-xs text-muted-foreground">
-            index.ts · package.json · bun.lock → R2 raw/{"{deploymentId}"}/
-          </p>
           <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-5">
             <pre className="overflow-x-auto whitespace-pre font-mono text-[14px] leading-6">
               <code>{HELLO_WORLD_INDEX_TS}</code>
@@ -162,7 +144,10 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={deploy} disabled={busy}>
+        <Button
+          onClick={deploy}
+          disabled={busy || nameStatus === "taken" || nameStatus === "checking"}
+        >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
           Deploy
         </Button>

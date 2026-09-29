@@ -26,6 +26,7 @@ import {
 } from "../lib/deploy";
 import { DeploySuccess } from "./deploy-success";
 import { TargetNodeSelect } from "./target-node-select";
+import { WorkerNameField, type WorkerNameStatus } from "./worker-name-field";
 
 interface UploadCodeProps {
   onBack: () => void;
@@ -33,14 +34,13 @@ interface UploadCodeProps {
 
 type DeployResult = { ok: true; data: DeployResultData } | { ok: false; error: string };
 
-const WORKER_URL_PREFIX = `${API_URL}/w/`;
-
 export function UploadCode({ onBack }: UploadCodeProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [nodes, setNodes] = useState<MachineNode[]>([]);
   const [loadingNodes, setLoadingNodes] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<DeployResult | null>(null);
+  const [nameStatus, setNameStatus] = useState<WorkerNameStatus>("idle");
 
   const refreshNodes = async () => {
     setLoadingNodes(true);
@@ -133,25 +133,13 @@ export function UploadCode({ onBack }: UploadCodeProps) {
         >
           <form.Field name="workerName">
             {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>Worker name</FieldLabel>
-                <div className="flex">
-                  <span className="inline-flex h-9 max-w-[55%] shrink-0 items-center truncate rounded-l-md border border-r-0 border-input bg-muted px-3 font-mono text-xs text-muted-foreground">
-                    {WORKER_URL_PREFIX}
-                  </span>
-                  <Input
-                    id={field.name}
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="hello-world"
-                    className="rounded-l-none"
-                  />
-                </div>
-                <FieldDescription className="truncate font-mono">
-                  Live at {WORKER_URL_PREFIX}
-                  {field.state.value.trim() || "<name>"}
-                </FieldDescription>
-              </Field>
+              <WorkerNameField
+                id={field.name}
+                value={field.state.value}
+                onChange={(v) => field.handleChange(v)}
+                onStatusChange={setNameStatus}
+                heightClass="h-9"
+              />
             )}
           </form.Field>
 
@@ -239,7 +227,11 @@ export function UploadCode({ onBack }: UploadCodeProps) {
         <Button type="button" variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button type="submit" form="upload-code-form" disabled={submitting}>
+        <Button
+          type="submit"
+          form="upload-code-form"
+          disabled={submitting || nameStatus === "taken" || nameStatus === "checking"}
+        >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Deploy
         </Button>

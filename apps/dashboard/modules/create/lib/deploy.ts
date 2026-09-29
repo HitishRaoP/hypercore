@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  adjectives,
+  animals,
+  NumberDictionary,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
+
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -82,6 +89,40 @@ export async function fetchNodes(): Promise<MachineNode[]> {
   if (!res.ok) return [];
   const data = await res.json().catch(() => null);
   return Array.isArray(data?.nodes) ? (data.nodes as MachineNode[]) : [];
+}
+
+/** Random worker slug in the style of "brave-fox-3588". */
+export function generateWorkerSlug(): string {
+  return uniqueNamesGenerator({
+    dictionaries: [
+      adjectives,
+      animals,
+      NumberDictionary.generate({ min: 1000, max: 9999 }),
+    ],
+    separator: "-",
+    length: 3,
+    style: "lowerCase",
+  });
+}
+
+/**
+ * True when the name is already taken, false when free, null when the
+ * API couldn't be reached (deploy will still validate server-side).
+ */
+export async function checkWorkerNameTaken(name: string): Promise<boolean | null> {
+  const workerName = name.trim();
+  if (!workerName) return null;
+  try {
+    const res = await fetch(
+      `${API_URL}/code-upload/check-name?workerName=${encodeURIComponent(workerName)}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    return typeof data?.taken === "boolean" ? data.taken : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Shared deploy-response shape rendered by the success card. */

@@ -29,6 +29,22 @@ export function getTemplate(_req: Request, res: Response): Response {
   return res.json(HELLO_WORLD);
 }
 
+/** GET /code-upload/check-name?workerName= — uniqueness probe for the dashboard. */
+export async function checkWorkerNameAvailability(
+  req: Request,
+  res: Response,
+): Promise<Response> {
+  try {
+    const workerName = String(req.query.workerName ?? "").trim();
+    if (!workerName) {
+      return res.status(400).json({ error: "workerName query param is required" });
+    }
+    return res.json({ workerName, taken: await isWorkerNameTaken(workerName) });
+  } catch (error) {
+    return sendError(res, error);
+  }
+}
+
 export async function uploadCode(req: Request, res: Response): Promise<Response | void> {
   try {
     const workerName = String(req.body?.workerName ?? "").trim();

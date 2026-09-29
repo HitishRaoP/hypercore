@@ -82,7 +82,7 @@ export const TargetNodeSelect = ({
         <Select value={value} onValueChange={onChange} disabled={loading || nodes.length === 0}>
           <SelectTrigger className="h-[45px] flex-1 rounded-xl font-mono text-sm">
             {selected ? (
-              <span className="flex min-w-0 items-center gap-2.5">
+              <span className="flex w-full min-w-0 items-center gap-2.5">
                 <OsIcon osName={selected.osName} />
                 <span className="min-w-0 truncate text-left">
                   <span className="block truncate font-sans text-[15px] font-medium">
