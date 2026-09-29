@@ -1,0 +1,30 @@
+{
+  "name": "@hypercore/transactional",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "email dev --port 3002",
+    "build": "tsup"
+  },
+  "exports": {
+    "./send-mail": {
+      "types": "./dist/src/send-mail.d.ts",
+      "import": "./dist/src/send-mail.js"
+    },
+    "./emails/*": {
+      "types": "./dist/emails/*.d.ts",
+      "import": "./dist/emails/*.js"
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@hypercore/typescript-config": "*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@react-email/components": "^1.0.12",
+    "resend": "^6.31.0"
+  }
+}

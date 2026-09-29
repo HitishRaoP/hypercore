@@ -10,6 +10,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer-s3": "^3.0.3",
+    "@hypercore/typescript-config": "*",
     "tsx": "^4.23.13"
   },
   "peerDependencies": {

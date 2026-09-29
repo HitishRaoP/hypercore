@@ -3,20 +3,41 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@hypercore/db";
 import * as schema from "@hypercore/db/schema/auth";
 import { passkey } from "@better-auth/passkey"
+import ForgotPasswordEmail from "@hypercore/transactional/emails/forgot-password";
+import ResetPasswordEmail from "@hypercore/transactional/emails/reset-password";
+import { sendMail } from "@hypercore/transactional/send-mail";
+import { env } from "./lib/env";
 
 export const auth = betterAuth({
-    baseURL: process.env.BETTER_AUTH_URL,
-    secret: process.env.BETTER_AUTH_SECRET,
+    baseURL: env.BETTER_AUTH_URL,
+    secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, {
         provider: "pg",
         schema,
     }),
     trustedOrigins: [
-        process.env.DASHBOARD_URL ?? "http://localhost:3000",
+        env.DASHBOARD_URL,
     ],
     emailAndPassword: {
         enabled: true,
-        autoSignIn: true,
+      autoSignIn: true,
+      sendResetPassword: async ({ user, url, token }) => {
+        const resetUrl = new URL(
+          `${env.DASHBOARD_URL}/reset-password?token=${token}`,
+        );
+        void sendMail(
+          user.email,
+          "Cursent - Reset your password",
+          ForgotPasswordEmail({ url: resetUrl.toString() }),
+        );
+      },
+      onPasswordReset: async ({ user }) => {
+        void sendMail(
+          user.email,
+          "Cursent - Password reset successful",
+          ResetPasswordEmail({}),
+        );
+      },
     },
     plugins: [
         passkey(),
