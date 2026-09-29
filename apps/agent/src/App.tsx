@@ -8,7 +8,6 @@ import {
   BreadcrumbPage,
 } from "@hypercore/ui/components/breadcrumb";
 import { Button } from "@hypercore/ui/components/button";
-import { Separator } from "@hypercore/ui/components/separator";
 import {
   SidebarInset,
   SidebarProvider,

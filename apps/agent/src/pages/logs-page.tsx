@@ -60,7 +60,6 @@ export function LogsPage({
   onRefresh,
   live,
   onLiveChange,
-  source,
   online,
 }: {
   invocations: ActivityInvocation[];
