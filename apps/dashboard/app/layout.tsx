@@ -7,11 +7,6 @@ const switzer = localFont({
   variable: "--font-switzer",
 });
 
-const jetbrainsMono = localFont({
-  src: "./fonts/JetBrainsMono-Variable.ttf",
-  variable: "--font-jetbrains-mono",
-});
-
 export const metadata: Metadata = {
   title: "HyperCore",
   description: "A Volunteer Computing Architecture for Serverless Function Execution at the Network Edge",
@@ -24,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${switzer.className} ${jetbrainsMono.variable}`}>{children}</body>
+      <body className={switzer.className}>{children}</body>
     </html>
   );
 }

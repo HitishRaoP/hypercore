@@ -88,7 +88,7 @@ function DottedPrefix() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-2 font-mono text-sm tracking-[0.22em] uppercase" style={{ color: ACCENT }}>
+    <p className="flex items-center gap-2 text-sm font-semibold tracking-[0.12em] uppercase" style={{ color: ACCENT }}>
       <DottedPrefix />
       {children}
     </p>
@@ -137,7 +137,7 @@ function GridButton({
   return (
     <Link
       href={href}
-      className={`inline-flex items-center rounded-[6px] font-mono tracking-[0.14em] text-white uppercase transition-opacity hover:opacity-90 ${
+      className={`inline-flex items-center rounded-[6px] font-semibold tracking-[0.06em] text-white uppercase transition-opacity hover:opacity-90 ${
         size === "sm" ? "gap-2.5 py-1 pr-1 pl-3.5 text-sm" : "gap-4 py-1.5 pr-1.5 pl-5 text-sm"
       } ${className}`}
       style={{ background: INK }}
@@ -235,7 +235,7 @@ function Halftone({ className = "" }: { className?: string }) {
   );
 }
 
-/** Wind / flow dash field — kept faint so copy always stays legible. */
+/** Wind / flow dash field, kept faint so copy always stays legible. */
 function FlowField({ className = "" }: { className?: string }) {
   const dashes = [];
   const cols = 22;
@@ -264,7 +264,7 @@ function FlowField({ className = "" }: { className?: string }) {
   );
 }
 
-/** 3x3 node matrix icon — connectivity grows left to right (like reference). */
+/** 3x3 node matrix icon: connectivity grows left to right (like reference). */
 function NodeMatrix({ mode }: { mode: 0 | 1 | 2 }) {
   const pts: Array<[number, number]> = [];
   for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) pts.push([20 + c * 46, 20 + r * 46]);
@@ -296,7 +296,7 @@ const problems = [
   {
     mode: 0 as const,
     title: "Side projects stuck on localhost",
-    body: "Your demo works on your machine — but hosting it means servers, bills, and DevOps you never signed up for.",
+    body: "Your demo works on your machine, but hosting it means servers, bills, and DevOps you never signed up for.",
   },
   {
     mode: 1 as const,
@@ -327,7 +327,7 @@ const appTabs: AppTab[] = [
     label: "Instant APIs",
     title: "Launch your backend.",
     accentTitle: "No servers attached.",
-    body: "Ship signup, checkout, and feed endpoints for your MVP or side project. Write TypeScript — spare PCs do the serving.",
+    body: "Ship signup, checkout, and feed endpoints for your MVP or side project. Write TypeScript. Spare PCs do the serving.",
     chips: ["Signup API", "Checkout", "Contact forms"],
     checks: ["Trigger", "Validate", "Respond", "Logged"],
     foot: "12.4K invokes today · median 41ms",
@@ -337,7 +337,7 @@ const appTabs: AppTab[] = [
     label: "Cron & Jobs",
     title: "Nightly work, handled.",
     accentTitle: "While you sleep.",
-    body: "Reports, reminders, cleanups, and digests. Schedule once — the network finds a machine that's already awake.",
+    body: "Reports, reminders, cleanups, and digests. Schedule once and the network finds a machine that's already awake.",
     chips: ["Nightly reports", "Reminders", "Cleanups"],
     checks: ["Scheduled 02:00", "Ran on node-38", "Emailed", "Archived"],
     foot: "860 jobs ran last night",
@@ -365,7 +365,7 @@ const appTabs: AppTab[] = [
 ];
 
 const useCases = [
-  { icon: Globe, title: "Instant APIs & backends", body: "Endpoints for MVPs, portfolios, and weekend launches — live in minutes, free while you grow.", foot: "SIGNUP → CHECKOUT → FEED" },
+  { icon: Globe, title: "Instant APIs & backends", body: "Endpoints for MVPs, portfolios, and weekend launches, live in minutes and free while you grow.", foot: "SIGNUP → CHECKOUT → FEED" },
   { icon: PlugZap, title: "Webhooks & integrations", body: "Stripe, GitHub, and Discord events received and fanned out to the rest of your stack.", foot: "STRIPE · GITHUB · DISCORD" },
   { icon: CalendarClock, title: "Cron & background jobs", body: "Digests, invoices, and reminders that run nightly on whatever machine is already on.", foot: "EVERY NIGHT · 02:00 UTC" },
   { icon: ScanFace, title: "AI features on a budget", body: "Moderation, embeddings, and summaries shared across the crowd instead of one GPU.", foot: "MODERATE → SUMMARIZE → REPLY" },
@@ -402,13 +402,12 @@ export function LandingView() {
       <MotionStyles />
       {/* ------------------------------- header ------------------------------ */}
       <header className="sticky top-0 z-40 border-b border-[var(--ds-gray-200)] bg-white/95 backdrop-blur">
-        <div className="relative mx-auto flex h-16 w-full max-w-[1200px] items-center gap-4 border-x border-[var(--ds-gray-200)] bg-white px-4 sm:px-6">
+        <div className="relative mx-auto flex h-16 w-full max-w-300 items-center gap-4 border-x border-[var(--ds-gray-200)] bg-white px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <HypercoreMark />
-            <span className="font-mono text-sm font-bold tracking-[0.28em] uppercase">Hypercore</span>
-            <span className="hidden font-mono text-sm text-[var(--ds-gray-600)] sm:inline">/</span>
+            <span className="text-sm font-semibold uppercase tracking-[0.06em]">Hypercore</span>
           </Link>
-          <nav className="ml-2 hidden items-center gap-7 font-jetbrains-mono text-sm tracking-[0.18em] text-[var(--ds-gray-900)] uppercase lg:flex">
+          <nav className="ml-2 hidden items-center gap-7 text-[13px] font-medium tracking-[0.06em] text-[var(--ds-gray-900)] uppercase lg:flex">
             <a href="#applications" className="transition-colors hover:text-[var(--ds-gray-1000)]">Applications</a>
             <a href="#problem" className="transition-colors hover:text-[var(--ds-gray-1000)]">Why it matters</a>
             <a href="#usecases" className="transition-colors hover:text-[var(--ds-gray-1000)]">Use cases</a>
@@ -431,7 +430,7 @@ export function LandingView() {
         </div>
         {menuOpen && (
           <div className="border-t border-[var(--ds-gray-200)] bg-white lg:hidden">
-            <nav className="mx-auto flex w-full max-w-[1200px] flex-col gap-1 border-x border-[var(--ds-gray-200)] bg-white px-4 py-3 font-mono text-sm tracking-[0.14em] uppercase">
+            <nav className="mx-auto flex w-full max-w-[1200px] flex-col gap-1 border-x border-[var(--ds-gray-200)] bg-white px-4 py-3 text-sm font-medium tracking-[0.06em] uppercase">
               {[
                 ["#applications", "Applications"],
                 ["#problem", "Why it matters"],
@@ -463,13 +462,13 @@ export function LandingView() {
         <section className="relative grid bg-white lg:grid-cols-2">
           {/* left */}
           <div className="flex flex-col justify-center border-b border-[var(--ds-gray-200)] bg-white p-6 sm:p-10 lg:border-r lg:border-b-0 lg:p-12 lg:py-18">
-            <SectionLabel>Now live — volunteer network</SectionLabel>
+            <SectionLabel>Now live: volunteer network</SectionLabel>
             <h1 className="mt-6 text-[42px] leading-[1.02] font-medium tracking-tight text-balance text-[var(--ds-gray-1000)] sm:text-6xl">
               Run apps on spare machines.
             </h1>
             <p className="mt-6 max-w-md text-base leading-relaxed text-[var(--ds-gray-900)]">
               Hypercore turns idle Windows PCs into your app fleet. Ship
-              APIs, automations, and AI features in TypeScript — without
+              APIs, automations, and AI features in TypeScript without
               renting a single server.
             </p>
             <div className="mt-7">
@@ -478,12 +477,12 @@ export function LandingView() {
               </GridButton>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button asChild variant="outline" size="sm" className="border-[var(--ds-gray-200)] bg-white font-mono text-sm tracking-[0.12em] uppercase">
+              <Button asChild variant="outline" size="sm" className="border-[var(--ds-gray-200)] bg-white text-sm font-semibold tracking-[0.06em] uppercase">
                 <Link href="/create">
                   <FileCode2 /> Write a function
                 </Link>
               </Button>
-              <span className="font-mono text-sm tracking-widest text-[var(--ds-gray-600)] uppercase">
+              <span className="text-sm font-medium tracking-[0.08em] text-[var(--ds-gray-600)] uppercase">
                 Windows 10+ · x64 · Free
               </span>
             </div>
@@ -494,8 +493,8 @@ export function LandingView() {
             <div className="relative flex h-full min-h-[420px] items-center justify-center p-6 sm:p-10">
               <Card className="w-full max-w-md gap-0 overflow-hidden rounded-[4px] border-[var(--ds-gray-200)] bg-white py-0 shadow-xl">
                 <CardHeader className="border-b border-[var(--ds-gray-200)] px-5 py-4">
-                  <p className="font-mono text-sm tracking-[0.2em] text-[var(--ds-gray-900)] uppercase">
-                    Functions — running
+                  <p className="text-sm font-semibold tracking-[0.1em] text-[var(--ds-gray-900)] uppercase">
+                    Functions running
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5 bg-white px-5 py-5">
@@ -551,7 +550,7 @@ export function LandingView() {
               key={p.title}
               className={`flex min-h-[380px] flex-col bg-white p-6 sm:p-8 ${i > 0 ? "border-t border-[var(--ds-gray-200)] md:border-t-0 md:border-l md:border-[var(--ds-gray-200)]" : ""}`}
             >
-              <div className="flex min-h-40 flex-1 items-start text-[var(--ds-gray-1000)]">
+              <div className="flex h-40 items-start text-[var(--ds-gray-1000)]">
                 <NodeMatrix mode={p.mode} />
               </div>
               <h3 className="mt-6 text-lg font-semibold tracking-tight text-[var(--ds-gray-1000)]">{p.title}</h3>
@@ -575,7 +574,7 @@ export function LandingView() {
                   <button
                     key={t.id}
                     onClick={() => setActiveTab(t.id)}
-                    className={`relative shrink-0 px-4 py-4 text-left font-mono text-sm tracking-[0.18em] whitespace-nowrap uppercase transition-colors lg:px-5 lg:py-5 ${active ? "text-[var(--ds-gray-1000)]" : "text-[var(--ds-gray-600)] hover:text-[var(--ds-gray-1000)]"}`}
+                    className={`relative shrink-0 px-4 py-4 text-left text-sm font-semibold tracking-[0.08em] whitespace-nowrap uppercase transition-colors lg:px-5 lg:py-5 ${active ? "text-[var(--ds-gray-1000)]" : "text-[var(--ds-gray-600)] hover:text-[var(--ds-gray-1000)]"}`}
                   >
                     <span className="flex items-center gap-2.5">
                       <span className="h-2 w-2 shrink-0" style={{ background: active ? ACCENT : "#d4d4d8" }} />
@@ -595,7 +594,7 @@ export function LandingView() {
               </GridButton>
             </div>
           </div>
-          {/* detail — text sits on solid white, art stays behind the card */}
+          {/* detail: text sits on solid white, art stays behind the card */}
           <div className="relative overflow-hidden bg-white">
             <div className="relative grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:p-12">
               <div className="relative rounded-md bg-white">
@@ -628,7 +627,7 @@ export function LandingView() {
                           </span>
                           <span className="text-sm text-[var(--ds-gray-1000)]">{c}</span>
                           {i === tab.checks.length - 1 && (
-                            <span className="ml-auto font-mono text-sm tracking-widest uppercase" style={{ color: ACCENT }}>
+                            <span className="ml-auto text-sm font-semibold tracking-[0.08em] uppercase" style={{ color: ACCENT }}>
                               Live
                             </span>
                           )}
@@ -638,7 +637,7 @@ export function LandingView() {
                     ))}
                   </CardContent>
                   <CardFooter className="border-t border-[var(--ds-gray-200)] bg-white px-5 py-3">
-                    <p className="font-mono text-sm tracking-[0.16em] text-[var(--ds-gray-900)] uppercase">{tab.foot}</p>
+                    <p className="text-sm font-medium tracking-[0.08em] text-[var(--ds-gray-900)] uppercase">{tab.foot}</p>
                   </CardFooter>
                 </Card>
               </div>
@@ -669,7 +668,7 @@ export function LandingView() {
                 <u.icon className="h-6 w-6" style={{ color: ACCENT }} strokeWidth={1.7} />
                 <h3 className="mt-4 text-lg font-semibold tracking-tight text-[var(--ds-gray-1000)]">{u.title}</h3>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--ds-gray-900)]">{u.body}</p>
-                <p className="mt-4 font-mono text-sm tracking-[0.2em] text-[var(--ds-gray-600)] uppercase">{u.foot}</p>
+                <p className="mt-4 text-sm font-medium tracking-[0.1em] text-[var(--ds-gray-600)] uppercase">{u.foot}</p>
               </div>
             ))}
           </div>
@@ -718,8 +717,8 @@ export function LandingView() {
                 </h2>
                 <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
                   Join thousands of builders who ditched hosting bills and
-                  deployed on spare PCs instead. Start running for free —
-                  no credit card required.
+                  deployed on spare PCs instead. Start running for free.
+                  No credit card required.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                   <Link
@@ -755,11 +754,11 @@ export function LandingView() {
         {/* -------------------------------- footer ------------------------------- */}
         <footer className="relative border-t border-[var(--ds-gray-200)] bg-white">
           <div className="flex flex-col gap-4 px-6 py-7 sm:flex-row sm:items-center sm:px-10 lg:px-12">
-            <span className="flex items-center gap-2 font-mono text-sm font-bold tracking-[0.28em] text-[var(--ds-gray-1000)] uppercase">
+            <span className="flex items-center gap-2 text-sm font-bold tracking-[0.14em] text-[var(--ds-gray-1000)] uppercase">
               <HypercoreMark className="h-5 w-5" /> Hypercore
             </span>
             <span className="text-sm text-[var(--ds-gray-900)]">Volunteer compute for everyday apps</span>
-            <span className="flex gap-5 font-mono text-sm tracking-[0.14em] text-[var(--ds-gray-900)] uppercase sm:ml-auto">
+            <span className="flex gap-5 text-sm font-medium tracking-[0.06em] text-[var(--ds-gray-900)] uppercase sm:ml-auto">
               <Link href="/download" className="transition-colors hover:text-[var(--ds-gray-1000)]">Download</Link>
               <Link href="/create" className="transition-colors hover:text-[var(--ds-gray-1000)]">Create</Link>
               <a href="https://github.com/HitishRaoP/hypercore" target="_blank" rel="noreferrer" className="transition-colors hover:text-[var(--ds-gray-1000)]">GitHub</a>

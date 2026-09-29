@@ -156,7 +156,7 @@ export const TargetNodeSelect = ({
         {loading
           ? "Loading registered nodes…"
           : nodes.length
-            ? `${nodes.filter((n) => n.online).length} of ${nodes.length} node(s) online. Offline nodes still accept deploys — they are stored until the agent reconnects.`
+            ? `${nodes.filter((n) => n.online).length} of ${nodes.length} node(s) online.`
             : "No nodes registered yet — start the HC Agent and register first."}
       </p>
     </div>
