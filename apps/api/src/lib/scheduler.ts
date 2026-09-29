@@ -54,8 +54,21 @@ export function addAgent(machineId: string, res: Response) {
   removeAgent(machineId);
 
   // Keep proxies / load-balancers from buffering the stream.
+  // Bail out the moment the socket is gone instead of writing into it:
+  // a failed write is what used to crash the process (and surface as
+  // 502s at the proxy while it restarted).
   const heartbeat = setInterval(() => {
-    res.write(`: heartbeat\n\n`);
+    if (res.destroyed || res.writableEnded) {
+      clearInterval(heartbeat);
+      removeAgent(machineId);
+      return;
+    }
+    try {
+      res.write(`: heartbeat\n\n`);
+    } catch {
+      clearInterval(heartbeat);
+      removeAgent(machineId);
+    }
   }, 25_000);
 
   agents.set(machineId, { res, heartbeat });

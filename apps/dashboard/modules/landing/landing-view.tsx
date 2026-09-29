@@ -12,9 +12,7 @@ import {
 import { Separator } from "@hypercore/ui/components/separator";
 import {
   ArrowRight,
-  ArrowUpRight,
   BellRing,
-  Bot,
   CalendarClock,
   Check,
   Cloud,
@@ -414,6 +412,12 @@ export function LandingView() {
             <a href="#join" className="transition-colors hover:text-[var(--ds-gray-1000)]">Join</a>
           </nav>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/sign-in"
+              className="hidden text-[13px] font-medium tracking-[0.06em] text-[var(--ds-gray-900)] uppercase transition-colors hover:text-[var(--ds-gray-1000)] sm:inline"
+            >
+              Sign in
+            </Link>
             <GridButton href="/download" size="sm" className="hidden sm:inline-flex">
               Get the agent <ArrowRight className="h-3.5 w-3.5" />
             </GridButton>

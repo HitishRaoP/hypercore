@@ -28,9 +28,13 @@ export function streamEvents(req: Request, res: Response): void {
 
   addAgent(machineId, res);
 
+  // A dead socket must never take the process down: a proxy that kills the
+  // TCP connection makes the next heartbeat write fail, and a response
+  // 'error' without a listener throws straight to uncaughtException.
   const cleanup = () => removeAgent(machineId);
   req.on("close", cleanup);
   req.on("error", cleanup);
+  res.on("error", cleanup);
 
   // Do not end the response — the scheduler writes into it per deployment.
 }

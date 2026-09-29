@@ -1,0 +1,27 @@
+{
+  "name": "@hypercore/auth",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/auth.d.ts",
+      "default": "./dist/auth.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "auth:generate": "bun x auth@latest generate --adapter drizzle --dialect postgresql --output=../db/src/schema/auth.ts --y",
+    "check-types": "tsc --noEmit --pretty"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@better-auth/passkey": "^1.7.6",
+    "@hypercore/db": "*",
+    "better-auth": "^1.7.6"
+  }
+}

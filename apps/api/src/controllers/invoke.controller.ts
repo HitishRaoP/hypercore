@@ -53,6 +53,7 @@ async function serve(record: DeploymentRow, functionPath: string, req: Request, 
 
   const outcome = await invokeOnAgent({
     machineId: record.machineId,
+    userId: record.userId ?? null,
     deploymentId: record.id,
     workerName: record.workerName,
     artifactKey: record.artifactKey,

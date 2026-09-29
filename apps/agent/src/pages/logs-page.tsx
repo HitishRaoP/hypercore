@@ -124,8 +124,8 @@ export function LogsPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={online ? "success" : "secondary"}>
-            {online ? "Node online" : "Node offline"}
+          <Badge variant={online && !error ? "success" : "secondary"}>
+            {online && !error ? "Node online" : error ? "Unreachable" : "Node offline"}
           </Badge>
           <Button variant="outline" size="sm" onClick={() => onLiveChange(!live)}>
             {live ? <Pause /> : <Play />}

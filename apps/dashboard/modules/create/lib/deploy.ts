@@ -6,9 +6,7 @@ import {
   NumberDictionary,
   uniqueNamesGenerator,
 } from "unique-names-generator";
-
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+import { env } from "@/lib/env";
 
 export const HELLO_WORLD_ENTRYPOINT = "index.ts";
 
@@ -57,7 +55,7 @@ export function helloWorldFiles(): File[] {
 }
 
 export async function fetchOnlineAgents(): Promise<string[]> {
-  const res = await fetch(`${API_URL}/agents/online`, { cache: "no-store" });
+  const res = await fetch(`${env.API_URL}/agents/online`, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json().catch(() => null);
   return Array.isArray(data?.online) ? data.online : [];
@@ -85,7 +83,7 @@ export interface MachineNode {
 }
 
 export async function fetchNodes(): Promise<MachineNode[]> {
-  const res = await fetch(`${API_URL}/api/v1/nodes`, { cache: "no-store" });
+  const res = await fetch(`${env.API_URL}/api/v1/nodes`, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json().catch(() => null);
   return Array.isArray(data?.nodes) ? (data.nodes as MachineNode[]) : [];
@@ -114,7 +112,7 @@ export async function checkWorkerNameTaken(name: string): Promise<boolean | null
   if (!workerName) return null;
   try {
     const res = await fetch(
-      `${API_URL}/code-upload/check-name?workerName=${encodeURIComponent(workerName)}`,
+      `${env.API_URL}/code-upload/check-name?workerName=${encodeURIComponent(workerName)}`,
       { cache: "no-store" },
     );
     if (!res.ok) return null;

@@ -1,7 +1,8 @@
-import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const deployments = pgTable("deployments", {
   id: text("id").primaryKey(),
+  userId: text("user_id"),
   workerName: text("worker_name").notNull().unique(),
   machineId: text("machine_id").notNull(),
   entrypoint: text("entrypoint").notNull().default("index.ts"),
@@ -15,7 +16,9 @@ export const deployments = pgTable("deployments", {
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
-});
+},
+(table) => [index("deployments_user_id_idx").on(table.userId)],
+);
 
 export type DeploymentRow = typeof deployments.$inferSelect;
 export type NewDeploymentRow = typeof deployments.$inferInsert;

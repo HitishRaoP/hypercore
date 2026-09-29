@@ -19,11 +19,11 @@ import {
   FieldLabel,
 } from "@hypercore/ui/components/field";
 import {
-  API_URL,
   fetchNodes,
   type DeployResultData,
   type MachineNode,
 } from "../lib/deploy";
+import { env } from "@/lib/env";
 import { DeploySuccess } from "./deploy-success";
 import { TargetNodeSelect } from "./target-node-select";
 import { WorkerNameField, type WorkerNameStatus } from "./worker-name-field";
@@ -79,7 +79,9 @@ export function UploadCode({ onBack }: UploadCodeProps) {
         formData.append("entrypoint", value.entrypoint || "index.ts");
         for (const file of value.files) formData.append("files", file, file.name);
 
-        const res = await axios.post(`${API_URL}/code-upload`, formData);
+        const res = await axios.post(`${env.API_URL}/code-upload`, formData, {
+          withCredentials: true,
+        });
         setResult({
           ok: true,
           data: {

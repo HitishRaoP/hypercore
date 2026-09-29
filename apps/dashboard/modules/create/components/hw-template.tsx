@@ -12,13 +12,13 @@ import {
   CardHeader,
 } from "@hypercore/ui/components/card";
 import {
-  API_URL,
   HELLO_WORLD_INDEX_TS,
   fetchNodes,
   helloWorldFiles,
   type DeployResultData,
   type MachineNode,
 } from "../lib/deploy";
+import { env } from "@/lib/env";
 import { DeploySuccess } from "./deploy-success";
 import { TargetNodeSelect } from "./target-node-select";
 import { WorkerNameField, type WorkerNameStatus } from "./worker-name-field";
@@ -63,7 +63,9 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
       formData.append("machineId", machineId.trim());
       formData.append("entrypoint", "index.ts");
       for (const file of helloWorldFiles()) formData.append("files", file, file.name);
-      const res = await axios.post(`${API_URL}/code-upload`, formData);
+      const res = await axios.post(`${env.API_URL}/code-upload`, formData, {
+        withCredentials: true
+      });
       setResult({
         status: res.data.status,
         deploymentId: res.data.deploymentId,

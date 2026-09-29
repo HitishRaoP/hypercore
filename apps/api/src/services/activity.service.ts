@@ -82,7 +82,7 @@ export function toDeploymentDto(row: DeploymentRow): DeploymentDto {
   };
 }
 
-function toInvocationDto(row: InvocationRow): InvocationDto {
+export function toInvocationDto(row: InvocationRow): InvocationDto {
   return {
     invocationId: row.id,
     deploymentId: row.deploymentId,

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
+import { requireUser } from "../lib/auth";
 import {
   getDeploymentFiles,
   getTemplate,
@@ -19,7 +20,9 @@ const router = Router();
 
 router.get("/template", getTemplate);
 router.get("/check-name", checkWorkerNameAvailability);
-router.post("/", upload.array("files", 10), uploadCode);
+// Dashboard-only: stamps the owner's userId, so it needs a user session.
+router.post("/", requireUser, upload.array("files", 10), uploadCode);
+// Agent-facing: the worker has no user session, these stay public.
 // NOTE: /file is defined before /:deploymentId/files so it isn't captured as an id.
 router.get("/file", proxyFile);
 router.get("/:deploymentId/files", getDeploymentFiles);

@@ -7,14 +7,14 @@ import { Button } from "@hypercore/ui/components/button";
 import { Input } from "@hypercore/ui/components/input";
 import { cn } from "@hypercore/ui/lib/utils";
 import {
-  API_URL,
   checkWorkerNameTaken,
   generateWorkerSlug,
 } from "../lib/deploy";
+import { env } from "@/lib/env";
 
 export type WorkerNameStatus = "idle" | "checking" | "available" | "taken" | "unknown";
 
-const WORKER_URL_PREFIX = `${API_URL}/w/`;
+const WORKER_URL_PREFIX = `${env.API_URL}/w/`;
 
 interface WorkerNameFieldProps {
   id?: string;

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { HttpError, sendError, WorkerNameTakenError } from "../lib/errors";
 import { pushDeployment } from "../lib/scheduler";
 import { invokeUrlFor, workerUrlFor } from "../lib/urls";
+import type { AuthedRequest } from "../lib/auth";
 import { toDeploymentDto } from "../services/activity.service";
 import {
   createDeployment,
@@ -64,6 +65,7 @@ export async function uploadCode(req: Request, res: Response): Promise<Response 
     // Unique-constraint race surfaces here as WorkerNameTakenError -> 409.
     await createDeployment({
       deploymentId,
+      userId: (req as AuthedRequest).userId,
       workerName,
       machineId,
       entrypoint: entry.name,

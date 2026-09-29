@@ -5,6 +5,7 @@ export const invocations = pgTable(
   "invocations",
   {
     id: text("id").primaryKey(),
+    userId: text("user_id"),
     deploymentId: text("deployment_id")
       .notNull()
       .references(() => deployments.id),
@@ -22,6 +23,7 @@ export const invocations = pgTable(
   },
   (table) => [
     index("invocations_machine_id_created_idx").on(table.machineId, table.createdAt),
+    index("invocations_user_id_created_idx").on(table.userId, table.createdAt),
   ],
 );
 

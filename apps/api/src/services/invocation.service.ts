@@ -47,6 +47,7 @@ export interface AgentInvokeResult {
 /** Everything the agent needs to execute one request. */
 export interface InvokeDispatch {
   machineId: string;
+  userId: string | null;
   deploymentId: string;
   workerName: string;
   artifactKey: string;
@@ -114,6 +115,20 @@ export async function listInvocationsByMachine(
     .limit(safeLimit);
 }
 
+/** Invocations of one user's deployments, newest first. */
+export async function listInvocationsByUser(
+  userId: string,
+  limit: number,
+): Promise<InvocationRow[]> {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  return db
+    .select()
+    .from(invocations)
+    .where(eq(invocations.userId, userId))
+    .orderBy(desc(invocations.createdAt))
+    .limit(safeLimit);
+}
+
 // ---------------------------------------------------------------------------
 // Dispatch: the main entry point
 // ---------------------------------------------------------------------------
@@ -130,6 +145,7 @@ export async function invokeOnAgent(dispatch: InvokeDispatch): Promise<InvokeOut
   // Persist before dispatching: a fast agent response must find its row.
   await recordStarted({
     id: invocationId,
+    userId: dispatch.userId,
     deploymentId: dispatch.deploymentId,
     workerName: dispatch.workerName,
     machineId: dispatch.machineId,
@@ -160,7 +176,7 @@ export async function invokeOnAgent(dispatch: InvokeDispatch): Promise<InvokeOut
 
 type StartedRow = Pick<
   NewInvocationRow,
-  "id" | "deploymentId" | "workerName" | "machineId" | "method" | "path"
+  "id" | "userId" | "deploymentId" | "workerName" | "machineId" | "method" | "path"
 >;
 
 async function recordStarted(row: StartedRow): Promise<void> {

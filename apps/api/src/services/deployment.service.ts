@@ -17,6 +17,7 @@ export type DeploymentStatus = DeploymentRow["status"];
 
 export interface CreateDeploymentInput {
   deploymentId: string;
+  userId: string;
   workerName: string;
   machineId: string;
   entrypoint: string;
@@ -44,6 +45,7 @@ export async function createDeployment(input: CreateDeploymentInput): Promise<De
       .insert(deployments)
       .values({
         id: input.deploymentId,
+        userId: input.userId,
         workerName: input.workerName,
         machineId: input.machineId,
         entrypoint: input.entrypoint,
@@ -113,6 +115,20 @@ export async function listDeploymentsByMachine(
     .select()
     .from(deployments)
     .where(eq(deployments.machineId, machineId))
+    .orderBy(desc(deployments.createdAt))
+    .limit(safeLimit);
+}
+
+/** Deployments owned by one user, newest first. */
+export async function listDeploymentsByUser(
+  userId: string,
+  limit: number,
+): Promise<DeploymentRow[]> {
+  const safeLimit = Math.min(Math.max(limit, 1), 100);
+  return db
+    .select()
+    .from(deployments)
+    .where(eq(deployments.userId, userId))
     .orderBy(desc(deployments.createdAt))
     .limit(safeLimit);
 }

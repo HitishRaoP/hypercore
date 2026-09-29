@@ -264,7 +264,11 @@ function App() {
             </Breadcrumb>
           </div>
           <Badge variant={activity.data?.online ? "success" : "secondary"}>
-            {activity.data?.online ? "Connected" : "Idle"}
+            {activity.data?.online
+              ? "Connected"
+              : activity.error
+                ? "Unreachable"
+                : "Idle"}
           </Badge>
         </header>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">

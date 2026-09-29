@@ -4,9 +4,12 @@ import { HttpError, sendError, WorkerNameTakenError } from "../lib/errors";
 import { artifactKeyFor, R2_BUCKET, S3 } from "../lib/s3";
 import { pushDeployment } from "../lib/scheduler";
 import { invokeUrlFor, workerUrlFor } from "../lib/urls";
+import type { AuthedRequest } from "../lib/auth";
+import { toDeploymentDto } from "../services/activity.service";
 import {
   getDeploymentById,
   isWorkerNameTaken,
+  listDeploymentsByUser,
   markDeploymentBuilt,
   updateDeploymentStatus,
 } from "../services/deployment.service";
@@ -88,6 +91,18 @@ export async function uploadArtifact(req: Request, res: Response): Promise<Respo
       invokeUrl: invokeUrlFor(deploymentId),
       workerUrl: workerUrlFor(record.workerName),
     });
+  } catch (error) {
+    return sendError(res, error);
+  }
+}
+
+/** GET /deployment — deployments owned by the signed-in user. */
+export async function listMyDeployments(req: Request, res: Response): Promise<Response> {
+  try {
+    const userId = (req as AuthedRequest).userId;
+    const limit = Math.min(Math.max(Number(req.query.limit ?? 50) || 50, 1), 100);
+    const rows = await listDeploymentsByUser(userId, limit);
+    return res.json({ deployments: rows.map(toDeploymentDto) });
   } catch (error) {
     return sendError(res, error);
   }

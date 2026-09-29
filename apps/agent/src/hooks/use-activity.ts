@@ -24,7 +24,9 @@ export function useActivity(
       setUpdatedAt(Date.now());
       setError("");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not reach coordinator.");
+      const detail =
+        reason instanceof Error ? reason.message : "Could not reach coordinator.";
+      setError(`${detail} — ${coordinatorUrl.replace(/\/+$/, "")}`);
     }
   }, [coordinatorUrl, machineId]);
 
