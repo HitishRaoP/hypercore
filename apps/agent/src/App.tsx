@@ -1,14 +1,30 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { Badge } from "@hypercore/ui/components/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@hypercore/ui/components/breadcrumb";
 import { Button } from "@hypercore/ui/components/button";
-import { Card, CardContent } from "@hypercore/ui/components/card";
-import { AlertCircle, ArrowRight, Check, Copy, Loader2, LogOut, ScanSearch } from "lucide-react";
+import { Separator } from "@hypercore/ui/components/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@hypercore/ui/components/sidebar";
+import { AlertCircle, ArrowRight, Loader2, ScanSearch } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ActivityView } from "./components/ActivityView";
-import { Header } from "./components/Header";
-import { LiveMetricsDashboard } from "./components/LiveMetricsDashboard";
+import { AGENT_PAGE_TITLES, AppSidebar, type AgentPage } from "./components/app-sidebar";
 import { MachineDetailsCard } from "./components/MachineDetailsCard";
 import { RegistrationForm } from "./components/RegistrationForm";
+import { useActivity } from "./hooks/use-activity";
+import { DeploymentsPage } from "./pages/deployments-page";
+import { InsightsPage } from "./pages/insights-page";
+import { LogsPage } from "./pages/logs-page";
+import { MachinePage } from "./pages/machine-page";
+import { SettingsPage } from "./pages/settings-page";
 import type {
   MachineInfo,
   MetricsTick,
@@ -17,62 +33,6 @@ import type {
   ToolchainStatus,
 } from "./types";
 import "./App.css";
-
-function NodeIdentityBar({
-  machineId,
-  registration,
-  coordinatorUrl,
-  onUnregister,
-}: {
-  machineId: string;
-  registration: RegistrationResponse;
-  coordinatorUrl: string;
-  onUnregister: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(machineId);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      /* clipboard unavailable */
-    }
-  };
-  return (
-    <Card>
-      <CardContent className="flex flex-wrap items-center gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">Machine ID</p>
-          <button
-            onClick={() => void copy()}
-            title="Copy machine ID"
-            className="mt-1 flex max-w-full items-center gap-2 font-mono text-sm transition-colors hover:text-muted-foreground"
-          >
-            <span className="truncate">{machineId}</span>
-            {copied ? (
-              <Check className="size-3.5 shrink-0" />
-            ) : (
-              <Copy className="size-3.5 shrink-0 text-muted-foreground" />
-            )}
-          </button>
-          <p className="mt-2 font-mono text-xs text-muted-foreground">
-            Node {registration.nodeId} · {registration.assignedRegion} · {coordinatorUrl}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onUnregister}
-          title="Forget this registration on this machine"
-        >
-          <LogOut />
-          Disconnect
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
 
 function App() {
   const [info, setInfo] = useState<MachineInfo | null>(null);
@@ -90,10 +50,18 @@ function App() {
   const [error, setError] = useState("");
   const [toolchain, setToolchain] = useState<ToolchainStatus | null>(null);
   const [coordinatorUrl, setCoordinatorUrl] = useState("");
-  const [tab, setTab] = useState<"activity" | "metrics">("activity");
+  const [page, setPage] = useState<AgentPage>("logs");
+  const [live, setLive] = useState(true);
 
   const machineId = info?.machineId ?? restoredMachineId;
   const registered = Boolean(registration && machineId);
+
+  const activity = useActivity(coordinatorUrl, machineId, {
+    enabled: registered && live,
+  });
+  const runningCount =
+    activity.data?.invocations.filter((i) => i.status === "running").length ?? 0;
+  const deploymentCount = activity.data?.deployments.length ?? 0;
 
   useEffect(() => {
     invoke<ToolchainStatus>("get_toolchain_status")
@@ -187,96 +155,165 @@ function App() {
     setRegistration(null);
     setCoordinatorUrl("");
     setRestoredMachineId("");
+    setPage("logs");
   };
+
+  if (restoring) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-background text-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <p className="mt-4 text-sm text-muted-foreground">
+          Checking for an existing registration…
+        </p>
+      </div>
+    );
+  }
+
+  if (!registered || !registration) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden bg-background text-foreground">
+        <main className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-y-auto px-6 py-10">
+          {!info ? (
+            <div className="m-auto flex w-full max-w-lg flex-col items-center justify-center text-center">
+              <div className="mb-6 grid size-14 place-items-center rounded-2xl border bg-muted">
+                <ScanSearch className="size-6 text-muted-foreground" />
+              </div>
+              <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                Worker agent
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+                Ready to inspect this machine
+              </h2>
+              <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+                Collect local capacity and network details before connecting this
+                worker to the HyperCore coordinator.
+              </p>
+              <p className="mt-4 max-w-sm font-mono text-xs leading-5 break-all text-muted-foreground">
+                Build tools (bundled): esbuild {toolchain?.esbuild ?? "missing"} ·
+                javy {toolchain?.javy ?? "missing"}
+              </p>
+              <Button
+                disabled={loading}
+                onClick={() => void scan()}
+                className="mt-7"
+              >
+                {loading ? <Loader2 className="animate-spin" /> : <ScanSearch />}
+                Scan Machine Specs
+                <ArrowRight />
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                  Step 2 of 3
+                </p>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight">
+                  Machine verified. Connect your coordinator.
+                </h2>
+              </div>
+              <MachineDetailsCard info={info} />
+              <RegistrationForm onRegister={register} />
+            </div>
+          )}
+          {error && (
+            <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-3 text-sm font-medium text-white shadow-lg">
+              <AlertCircle className="size-4" />
+              {error}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header online={registered} />
-      <main className="mx-auto max-w-5xl px-6 py-8">
-        {restoring ? (
-          <div className="mx-auto flex min-h-[480px] max-w-lg flex-col items-center justify-center text-center">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              Checking for an existing registration…
-            </p>
+    <SidebarProvider className="h-full min-h-0">
+      <AppSidebar
+        page={page}
+        onNavigate={setPage}
+        hostname={info?.hostname ?? "Worker"}
+        machineId={machineId}
+        runningCount={runningCount}
+        deploymentCount={deploymentCount}
+        onDisconnect={() => void unregister()}
+        className="top-9 h-[calc(100svh-2.25rem)]"
+      />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
+          <div className="flex items-center gap-2">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>HyperCore</BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{AGENT_PAGE_TITLES[page]}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
-        ) : registered && registration ? (
-          <div className="space-y-6">
-            <NodeIdentityBar
-              machineId={machineId}
+          <Badge variant={activity.data?.online ? "default" : "secondary"}>
+            {activity.data?.online ? "Connected" : "Idle"}
+          </Badge>
+        </header>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
+          {page === "machine" && (
+            <MachinePage
+              info={info}
               registration={registration}
               coordinatorUrl={coordinatorUrl}
+            />
+          )}
+          {page === "logs" && (
+            <LogsPage
+              invocations={activity.data?.invocations ?? []}
+              coordinatorUrl={coordinatorUrl}
+              updatedAt={activity.updatedAt}
+              error={activity.error}
+              refreshing={activity.refreshing}
+              onRefresh={() => void activity.refresh()}
+              live={live}
+              onLiveChange={setLive}
+              source={activity.data?.source ?? null}
+              online={activity.data?.online ?? false}
+            />
+          )}
+          {page === "deployments" && (
+            <DeploymentsPage
+              deployments={activity.data?.deployments ?? []}
+              updatedAt={activity.updatedAt}
+              error={activity.error}
+              refreshing={activity.refreshing}
+              onRefresh={() => void activity.refresh()}
+            />
+          )}
+          {page === "insights" && (
+            <InsightsPage
+              metrics={metrics}
+              info={info}
+              toolchain={toolchain}
+              online={activity.data?.online ?? false}
+            />
+          )}
+          {page === "settings" && (
+            <SettingsPage
+              registration={registration}
+              coordinatorUrl={coordinatorUrl}
+              machineId={machineId}
+              toolchain={toolchain}
               onUnregister={() => void unregister()}
             />
-            <div className="flex gap-1 rounded-lg border bg-muted p-1">
-              {(["activity", "metrics"] as const).map((name) => (
-                <button
-                  key={name}
-                  onClick={() => setTab(name)}
-                  className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                    tab === name ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-            {tab === "activity" ? (
-              <ActivityView coordinatorUrl={coordinatorUrl} machineId={machineId} />
-            ) : (
-              <LiveMetricsDashboard metrics={metrics} registration={registration} />
-            )}
-          </div>
-        ) : !info ? (
-          <div className="mx-auto flex min-h-[480px] max-w-lg flex-col items-center justify-center text-center">
-            <div className="mb-6 grid size-14 place-items-center rounded-2xl border bg-muted">
-              <ScanSearch className="size-6 text-muted-foreground" />
-            </div>
-            <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
-              Worker agent
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-              Ready to inspect this machine
-            </h2>
-            <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
-              Collect local capacity and network details before connecting this
-              worker to the HyperCore coordinator.
-            </p>
-            <p className="mt-4 max-w-sm font-mono text-xs leading-5 break-all text-muted-foreground">
-              Build tools (bundled): esbuild {toolchain?.esbuild ?? "missing"} ·
-              javy {toolchain?.javy ?? "missing"}
-            </p>
-            <Button
-              disabled={loading}
-              onClick={() => void scan()}
-              className="mt-7"
-            >
-              {loading ? <Loader2 className="animate-spin" /> : <ScanSearch />}
-              Scan Machine Specs
-              <ArrowRight />
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div>
-              <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
-                Step 2 of 3
-              </p>
-              <h2 className="mt-2 text-xl font-semibold tracking-tight">
-                Machine verified. Connect your coordinator.
-              </h2>
-            </div>
-            <MachineDetailsCard info={info} />
-            <RegistrationForm onRegister={register} />
-          </div>
-        )}
+          )}
+        </div>
         {error && (
-          <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg border-transparent bg-destructive px-4 py-3 text-sm font-medium text-white shadow-lg">
+          <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-3 text-sm font-medium text-white shadow-lg">
             <AlertCircle className="size-4" />
             {error}
           </div>
         )}
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 export default App;

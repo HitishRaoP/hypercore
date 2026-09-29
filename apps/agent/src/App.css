@@ -1,6 +1,16 @@
 /* Theme + Tailwind come from @hypercore/ui/styles/globals.css (imported in main.tsx),
    mirroring apps/dashboard/app/layout.tsx. App-specific overrides only. */
 
+/* Desktop app shell: the viewport never scrolls. Only inner regions
+   (tables, card bodies) scroll. */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 @font-face {
   font-family: "Switzer";
   src: url("./fonts/Switzer-Variable.ttf") format("truetype");
@@ -10,4 +20,30 @@
 
 body {
   font-family: "Switzer", sans-serif;
+}
+
+/* Thin, subtle scrollbars for inner scroll regions (tables, page bodies).
+   The app shell itself never scrolls. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.scroll-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Table scroll regions: the shadcn Table ships its own overflow-x container.
+   Neutralize it so the Card's scroll region is the single scroller for both
+   axes — otherwise the horizontal bar ends up at the bottom of the full
+   row list, below the fold, instead of pinned at the card edge. */
+.table-scroll > [data-slot="table-container"] {
+  overflow: visible;
 }

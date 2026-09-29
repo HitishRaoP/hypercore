@@ -5,6 +5,45 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HyperCore Agent</title>
+    <script>
+      // Boot diagnostics: surface renderer failures instead of a blank window.
+      (function () {
+        function showBootError(title, detail) {
+          if (document.getElementById("boot-error")) return;
+          var box = document.createElement("div");
+          box.id = "boot-error";
+          box.style.cssText =
+            "position:fixed;inset:0;z-index:9999;background:#fff;color:#111;padding:24px;font:13px/1.6 monospace;white-space:pre-wrap;overflow:auto;";
+          box.textContent = title + "\n\n" + detail;
+          document.body.appendChild(box);
+        }
+        window.__bootError = showBootError;
+        window.addEventListener("error", function (e) {
+          showBootError(
+            "Renderer error: " + (e.message || "unknown"),
+            String((e.error && e.error.stack) || e.filename + ":" + e.lineno || "")
+          );
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          var r = e.reason;
+          showBootError(
+            "Unhandled promise rejection",
+            String((r && (r.stack || r.message)) || r)
+          );
+        });
+        // If React never mounts, explain instead of staying blank.
+        window.setTimeout(function () {
+          var root = document.getElementById("root");
+          if (root && root.childElementCount === 0 && !document.getElementById("boot-error")) {
+            showBootError(
+              "The UI bundle did not mount.",
+              "The window loaded but React rendered nothing.\n" +
+                "If running `tauri dev`, open http://localhost:1420/ in a browser and check DevTools (F12) console."
+            );
+          }
+        }, 8000);
+      })();
+    </script>
   </head>
 
   <body>
