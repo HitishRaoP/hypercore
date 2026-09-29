@@ -18,24 +18,41 @@ import {
   FieldDescription,
   FieldLabel,
 } from "@hypercore/ui/components/field";
-import { API_URL, fetchOnlineAgents } from "../lib/deploy";
+import {
+  API_URL,
+  fetchNodes,
+  type DeployResultData,
+  type MachineNode,
+} from "../lib/deploy";
+import { DeploySuccess } from "./deploy-success";
+import { TargetNodeSelect } from "./target-node-select";
 
 interface UploadCodeProps {
   onBack: () => void;
 }
 
-type DeployResult =
-  | { ok: true; status: string; deploymentId: string; invokeUrl: string; workerUrl: string; files: { name: string; key: string }[] }
-  | { ok: false; error: string };
+type DeployResult = { ok: true; data: DeployResultData } | { ok: false; error: string };
+
+const WORKER_URL_PREFIX = `${API_URL}/w/`;
 
 export function UploadCode({ onBack }: UploadCodeProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [agents, setAgents] = useState<string[]>([]);
+  const [nodes, setNodes] = useState<MachineNode[]>([]);
+  const [loadingNodes, setLoadingNodes] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<DeployResult | null>(null);
 
+  const refreshNodes = async () => {
+    setLoadingNodes(true);
+    try {
+      setNodes(await fetchNodes());
+    } finally {
+      setLoadingNodes(false);
+    }
+  };
+
   useEffect(() => {
-    void fetchOnlineAgents().then(setAgents);
+    void refreshNodes();
   }, []);
 
   const form = useForm({
@@ -50,7 +67,7 @@ export function UploadCode({ onBack }: UploadCodeProps) {
       setSubmitting(true);
       setResult(null);
       try {
-        if (!value.machineId) throw new Error("Pick a target node (machineId).");
+        if (!value.machineId) throw new Error("Pick a target node.");
         if (!value.files.length) throw new Error("Upload a .ts file, package.json and bun.lock.");
         const names = value.files.map((f) => f.name);
         if (!names.some((n) => n.endsWith(".ts"))) throw new Error("A .ts function file is required.");
@@ -65,11 +82,16 @@ export function UploadCode({ onBack }: UploadCodeProps) {
         const res = await axios.post(`${API_URL}/code-upload`, formData);
         setResult({
           ok: true,
-          status: res.data.status,
-          deploymentId: res.data.deploymentId,
-          invokeUrl: res.data.invokeUrl,
-          workerUrl: res.data.workerUrl,
-          files: res.data.files ?? [],
+          data: {
+            status: res.data.status,
+            deploymentId: res.data.deploymentId,
+            workerName: res.data.workerName,
+            machineId: res.data.machineId,
+            entrypoint: res.data.entrypoint,
+            files: res.data.files ?? [],
+            invokeUrl: res.data.invokeUrl,
+            workerUrl: res.data.workerUrl,
+          },
         });
         form.reset();
       } catch (error) {
@@ -85,6 +107,10 @@ export function UploadCode({ onBack }: UploadCodeProps) {
       }
     },
   });
+
+  if (result?.ok) {
+    return <DeploySuccess result={result.data} onBack={onBack} onReset={() => setResult(null)} />;
+  }
 
   return (
     <Card className="w-1/2 overflow-hidden pb-0 sm:w-2/3 md:w-full">
@@ -109,12 +135,22 @@ export function UploadCode({ onBack }: UploadCodeProps) {
             {(field) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>Worker name</FieldLabel>
-                <Input
-                  id={field.name}
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  placeholder="hello-world"
-                />
+                <div className="flex">
+                  <span className="inline-flex h-9 max-w-[55%] shrink-0 items-center truncate rounded-l-md border border-r-0 border-input bg-muted px-3 font-mono text-xs text-muted-foreground">
+                    {WORKER_URL_PREFIX}
+                  </span>
+                  <Input
+                    id={field.name}
+                    value={field.state.value}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="hello-world"
+                    className="rounded-l-none"
+                  />
+                </div>
+                <FieldDescription className="truncate font-mono">
+                  Live at {WORKER_URL_PREFIX}
+                  {field.state.value.trim() || "<name>"}
+                </FieldDescription>
               </Field>
             )}
           </form.Field>
@@ -123,41 +159,13 @@ export function UploadCode({ onBack }: UploadCodeProps) {
             {(field) => (
               <Field>
                 <FieldLabel htmlFor={field.name}>Target node</FieldLabel>
-                <div className="flex gap-2">
-                  <Input
-                    id={field.name}
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    placeholder="machine-id (agent must be online)"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => void fetchOnlineAgents().then(setAgents)}
-                  >
-                    Refresh
-                  </Button>
-                </div>
-                <FieldDescription>
-                  {agents.length
-                    ? `Online: ${agents.join(", ")}`
-                    : "No agents online — start the HC Agent and register first."}
-                </FieldDescription>
-                {agents.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {agents.map((id) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => field.handleChange(id)}
-                        className="rounded-md border px-2 py-1 font-mono text-xs hover:bg-zinc-100"
-                      >
-                        {id.slice(0, 12)}…
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <TargetNodeSelect
+                  value={field.state.value}
+                  onChange={(id) => field.handleChange(id)}
+                  nodes={nodes}
+                  loading={loadingNodes}
+                  onRefresh={() => void refreshNodes()}
+                />
               </Field>
             )}
           </form.Field>
@@ -219,29 +227,6 @@ export function UploadCode({ onBack }: UploadCodeProps) {
             )}
           </form.Field>
 
-          {result?.ok && (
-            <div className="space-y-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-              <p>
-                {result.status === "routed" ? "Routed to node" : "Stored (node offline)"} ·
-                deployment <span className="font-mono">{result.deploymentId}</span> ·
-                {result.files.length} file(s) in R2. The agent builds TS→JS→wasm
-                and uploads the wasm back via the server.
-              </p>
-              <p>
-                Invoke:{" "}
-                <a href={result.invokeUrl} target="_blank" rel="noreferrer" className="font-mono underline">
-                  {result.invokeUrl}
-                </a>
-              </p>
-              <p>
-                Worker:{" "}
-                <a href={result.workerUrl} target="_blank" rel="noreferrer" className="font-mono underline">
-                  {result.workerUrl}
-                </a>{" "}
-                <span className="text-green-700">(live once the build lands; 409 until then)</span>
-              </p>
-            </div>
-          )}
           {result && !result.ok && (
             <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
               {result.error}

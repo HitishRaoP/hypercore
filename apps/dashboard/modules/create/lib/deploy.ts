@@ -5,14 +5,10 @@ export const API_URL =
 
 export const HELLO_WORLD_ENTRYPOINT = "index.ts";
 
-export const HELLO_WORLD_INDEX_TS = `// HyperCore worker entrypoint — TS -> (esbuild) -> JS -> (javy) -> wasm
-
-export function handler(): string {
+export const HELLO_WORLD_INDEX_TS = `export function handler(): string {
   return "Hello, World!";
 }
 
-// Javy/QuickJS entrypoint: keep a side-effectful root so the
-// compiled wasm module prints hello on instantiation.
 console.log(handler());
 `;
 
@@ -58,4 +54,44 @@ export async function fetchOnlineAgents(): Promise<string[]> {
   if (!res.ok) return [];
   const data = await res.json().catch(() => null);
   return Array.isArray(data?.online) ? data.online : [];
+}
+
+/** One registered execution node (GET /api/v1/nodes). */
+export interface MachineNode {
+  machineId: string;
+  hostname: string;
+  osName: string;
+  osVersion: string;
+  kernelVersion: string;
+  arch: string;
+  cpuLogicalCores: number;
+  cpuPhysicalCores: number;
+  cpuBrand: string;
+  totalMemoryMb: number;
+  usedMemoryMb: number;
+  totalDiskMb: number;
+  availableDiskMb: number;
+  localIp: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  online: boolean;
+}
+
+export async function fetchNodes(): Promise<MachineNode[]> {
+  const res = await fetch(`${API_URL}/api/v1/nodes`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => null);
+  return Array.isArray(data?.nodes) ? (data.nodes as MachineNode[]) : [];
+}
+
+/** Shared deploy-response shape rendered by the success card. */
+export interface DeployResultData {
+  status: string;
+  deploymentId: string;
+  workerName: string;
+  machineId: string;
+  entrypoint: string;
+  files: { name: string; key: string }[];
+  invokeUrl: string;
+  workerUrl: string;
 }

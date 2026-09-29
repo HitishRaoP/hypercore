@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@hypercore/ui/components/button";
 import { Input } from "@hypercore/ui/components/input";
@@ -15,47 +15,66 @@ import {
 import {
   API_URL,
   HELLO_WORLD_INDEX_TS,
-  fetchOnlineAgents,
+  fetchNodes,
   helloWorldFiles,
+  type DeployResultData,
+  type MachineNode,
 } from "../lib/deploy";
+import { DeploySuccess } from "./deploy-success";
+import { TargetNodeSelect } from "./target-node-select";
 
 interface HWTemplateProps {
   onBack: () => void;
 }
 
+const WORKER_URL_PREFIX = `${API_URL}/w/`;
+
 export const HWTemplate = ({ onBack }: HWTemplateProps) => {
   const [workerName, setWorkerName] = useState("long-poetry-3588");
   const [machineId, setMachineId] = useState("");
-  const [agents, setAgents] = useState<string[]>([]);
+  const [nodes, setNodes] = useState<MachineNode[]>([]);
+  const [loadingNodes, setLoadingNodes] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [urls, setUrls] = useState<{ invokeUrl: string; workerUrl: string } | null>(null);
+  const [result, setResult] = useState<DeployResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const refreshNodes = async () => {
+    setLoadingNodes(true);
+    try {
+      const online = await fetchNodes();
+      setNodes(online);
+      if (online[0]) setMachineId((prev) => prev || online[0]!.machineId);
+    } finally {
+      setLoadingNodes(false);
+    }
+  };
+
   useEffect(() => {
-    void fetchOnlineAgents().then((online) => {
-      setAgents(online);
-      if (online[0]) setMachineId((prev) => prev || online[0]!);
-    });
+    void refreshNodes();
   }, []);
 
   const deploy = async () => {
     setBusy(true);
-    setMessage(null);
-    setUrls(null);
+    setResult(null);
     setError(null);
     try {
-      if (!machineId.trim()) throw new Error("Pick a target node (machineId).");
+      if (!machineId.trim()) throw new Error("Pick a target node.");
       const formData = new FormData();
       formData.append("workerName", workerName.trim() || "hello-world");
       formData.append("machineId", machineId.trim());
       formData.append("entrypoint", "index.ts");
       for (const file of helloWorldFiles()) formData.append("files", file, file.name);
       const res = await axios.post(`${API_URL}/code-upload`, formData);
-      setMessage(
-        `${res.data.status === "routed" ? "Routed to node" : "Stored (node offline)"} · deployment ${res.data.deploymentId} · 3 files in R2. Agent builds index.ts → bundle.js (esbuild) → worker.wasm (javy).`,
-      );
-      setUrls({ invokeUrl: res.data.invokeUrl, workerUrl: res.data.workerUrl });
+      setResult({
+        status: res.data.status,
+        deploymentId: res.data.deploymentId,
+        workerName: res.data.workerName,
+        machineId: res.data.machineId,
+        entrypoint: res.data.entrypoint,
+        files: res.data.files ?? [],
+        invokeUrl: res.data.invokeUrl,
+        workerUrl: res.data.workerUrl,
+      });
     } catch (e) {
       setError(
         axios.isAxiosError(e)
@@ -68,6 +87,16 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
       setBusy(false);
     }
   };
+
+  if (result) {
+    return (
+      <DeploySuccess
+        result={result}
+        onBack={onBack}
+        onReset={() => setResult(null)}
+      />
+    );
+  }
 
   return (
     <Card className="flex max-h-[calc(100vh-228px)] w-1/2 sm:w-2/3 md:w-full flex-col overflow-hidden pb-0">
@@ -82,35 +111,32 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
       <CardContent className="flex-1 min-h-0 space-y-5 overflow-y-auto pb-6">
         <div className="space-y-2">
           <label className="text-[16px] font-medium">Worker name</label>
-          <div className="relative">
+          <div className="flex">
+            <span className="inline-flex h-[45px] max-w-[55%] shrink-0 items-center truncate rounded-l-xl border border-r-0 border-input bg-muted px-3 font-mono text-sm text-muted-foreground">
+              {WORKER_URL_PREFIX}
+            </span>
             <Input
               value={workerName}
               onChange={(e) => setWorkerName(e.target.value)}
-              className="h-[45px] rounded-xl pr-[220px] text-[16px]"
+              placeholder="my-worker"
+              className="h-[45px] rounded-l-none rounded-r-xl text-[16px]"
             />
-            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-1 text-[16px]">
-              <span>.hitish.hypercore.dev</span>
-              <CheckCircle2 className="ml-2 h-5 w-5 text-blue-500" />
-            </div>
           </div>
+          <p className="truncate font-mono text-xs text-muted-foreground">
+            Live at {WORKER_URL_PREFIX}
+            {workerName.trim() || "<name>"}
+          </p>
         </div>
 
         <div className="space-y-2">
           <label className="text-[16px] font-medium">Target node</label>
-          <div className="flex gap-2">
-            <Input
-              value={machineId}
-              onChange={(e) => setMachineId(e.target.value)}
-              placeholder="machine-id (agent must be online)"
-              className="h-[45px] rounded-xl font-mono text-sm"
-            />
-            <Button variant="outline" onClick={() => void fetchOnlineAgents().then(setAgents)}>
-              Refresh
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {agents.length ? `Online: ${agents.join(", ")}` : "No agents online — register the HC Agent first."}
-          </p>
+          <TargetNodeSelect
+            value={machineId}
+            onChange={setMachineId}
+            nodes={nodes}
+            loading={loadingNodes}
+            onRefresh={() => void refreshNodes()}
+          />
         </div>
 
         <div className="space-y-2">
@@ -125,27 +151,6 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
           </div>
         </div>
 
-        {message && (
-          <div className="space-y-1 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-            <p>{message}</p>
-            {urls && (
-              <>
-                <p>
-                  Invoke:{" "}
-                  <a href={urls.invokeUrl} target="_blank" rel="noreferrer" className="font-mono underline">
-                    {urls.invokeUrl}
-                  </a>
-                </p>
-                <p>
-                  Worker:{" "}
-                  <a href={urls.workerUrl} target="_blank" rel="noreferrer" className="font-mono underline">
-                    {urls.workerUrl}
-                  </a>
-                </p>
-              </>
-            )}
-          </div>
-        )}
         {error && (
           <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {error}
