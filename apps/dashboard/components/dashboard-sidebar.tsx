@@ -38,6 +38,8 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { Hashvatar } from "hashvatar/react";
+
 
 const NAV = [
   { href: "/deployments", label: "Deployments", icon: Package },
@@ -46,16 +48,6 @@ const NAV = [
   { href: "/create", label: "Create", icon: FileCode2 },
   { href: "/settings", label: "Settings", icon: Settings2 },
 ] as const;
-
-function initials(name?: string | null, email?: string | null) {
-  const source = name?.trim() || email?.trim() || "?";
-  return source
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export function DashboardSidebar(
   props: React.ComponentProps<typeof Sidebar>,
@@ -122,12 +114,12 @@ export function DashboardSidebar(
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="size-8">
-                    <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "User"} />
-                    <AvatarFallback>
-                      {initials(user?.name, user?.email)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Hashvatar
+                         className="cursor-pointer size-10"
+                         hash={user?.email || ''}
+                         mode="dither"
+                         size={28}
+                       />
                   <span className="grid flex-1 text-left text-sm leading-normal">
                     <span className="truncate font-medium">
                       {user?.name || "Account"}
