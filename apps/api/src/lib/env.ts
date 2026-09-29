@@ -6,7 +6,9 @@ export const envSchema = z.object({
   CLOUDFLARE_ACCESS_KEY_ID: z.string({error: "CLOUDFLARE_ACCESS_KEY_ID is required"}),
   CLOUDFLARE_SECRET_ACCESS_KEY: z.string({error: "CLOUDFLARE_SECRET_ACCESS_KEY is required"}),
   R2_BUCKET: z.string().default("hypercore"),
-  DATABASE_URL: z.string().optional(),
+  // Required: deployments + invocations are durable in Postgres. The server
+  // fails fast at boot without it instead of silently running on memory.
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   /** Public base URL used to build user-facing invoke URLs. */
   PUBLIC_URL: z.string().optional(),
   /** Wall-clock cap per wasm invocation (worker is terminated past it). */

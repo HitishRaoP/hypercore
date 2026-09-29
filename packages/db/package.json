@@ -12,8 +12,8 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/db.d.ts",
+      "default": "./dist/db.js"
     },
     "./schema/*": {
       "types": "./dist/schema/*.d.ts",
