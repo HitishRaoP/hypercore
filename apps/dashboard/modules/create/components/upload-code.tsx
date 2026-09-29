@@ -178,22 +178,22 @@ export function UploadCode({ onBack }: UploadCodeProps) {
                 <FieldLabel htmlFor={field.name}>Files (.ts + package.json + bun.lock)</FieldLabel>
                 <div
                   onClick={() => inputRef.current?.click()}
-                  className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-6 transition-colors hover:bg-zinc-50"
+                  className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--ds-gray-400)] bg-white px-4 py-6 transition-colors hover:bg-[var(--ds-gray-100)]"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-300">
-                    <FolderOpen className="h-5 w-5 text-zinc-500" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--ds-gray-400)]">
+                    <FolderOpen className="h-5 w-5 text-[var(--ds-gray-900)]" />
                   </div>
-                  <p className="mt-3 text-[15px] text-zinc-700">
+                  <p className="mt-3 text-sm text-[var(--ds-gray-1000)]">
                     Drag in or click to{" "}
                     <span className="underline underline-offset-2">upload files</span>.
                   </p>
-                  <FieldDescription className="mt-2 text-sm text-zinc-500">
+                  <FieldDescription className="mt-2 text-sm text-[var(--ds-gray-900)]">
                     Select index.ts, package.json and bun.lock (up to 10 files)
                   </FieldDescription>
                   {field.state.value.length > 0 && (
-                    <ul className="mt-3 w-full space-y-1 text-sm text-zinc-900">
+                    <ul className="mt-3 w-full space-y-1 text-sm text-[var(--ds-gray-1000)]">
                       {field.state.value.map((f) => (
-                        <li key={f.name} className="font-mono text-xs">
+                        <li key={f.name} className="font-mono text-sm">
                           {f.name} · {(f.size / 1024).toFixed(1)} KB
                         </li>
                       ))}
@@ -216,7 +216,7 @@ export function UploadCode({ onBack }: UploadCodeProps) {
           </form.Field>
 
           {result && !result.ok && (
-            <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+            <p className="rounded-lg border border-[var(--ds-red-400)] bg-[var(--ds-red-100)] px-3 py-2 text-sm text-[var(--ds-red-900)]">
               {result.error}
             </p>
           )}

@@ -112,25 +112,25 @@ export const WorkerNameField = ({
       </div>
       <div className="space-y-0.5">
         {status === "checking" && (
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Checking availability…
           </p>
         )}
         {status === "available" && (
-          <p className="flex items-center gap-1.5 text-xs text-green-700">
+          <p className="flex items-center gap-1.5 text-sm text-[var(--ds-green-900)]">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Name available
           </p>
         )}
         {status === "taken" && (
-          <p className="flex items-center gap-1.5 text-xs text-rose-700">
+          <p className="flex items-center gap-1.5 text-sm text-[var(--ds-red-900)]">
             <XCircle className="h-3.5 w-3.5" />
             Name already taken — pick another or regenerate.
           </p>
         )}
         {status === "unknown" && (
-          <p className="text-xs text-amber-700">
+          <p className="text-sm text-[var(--ds-amber-900)]">
             Couldn&apos;t verify availability — the server will validate on deploy.
           </p>
         )}

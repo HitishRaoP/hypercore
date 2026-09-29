@@ -126,15 +126,15 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
 
         <div className="space-y-2">
           <label className="text-[16px] font-medium">Bundle contents</label>
-          <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-5">
-            <pre className="overflow-x-auto whitespace-pre font-mono text-[14px] leading-6">
+          <div className="overflow-hidden rounded-xl border border-[var(--ds-gray-400)] bg-[var(--ds-gray-100)] p-5">
+            <pre className="overflow-x-auto whitespace-pre font-mono text-sm leading-6">
               <code>{HELLO_WORLD_INDEX_TS}</code>
             </pre>
           </div>
         </div>
 
         {error && (
-          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          <p className="rounded-lg border border-[var(--ds-red-400)] bg-[var(--ds-red-100)] px-3 py-2 text-sm text-[var(--ds-red-900)]">
             {error}
           </p>
         )}

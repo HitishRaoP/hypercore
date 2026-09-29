@@ -16,7 +16,7 @@ function Gauge({
   icon: typeof Activity;
 }) {
   return (
-    <Card>
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle className="flex items-center justify-between text-sm font-medium">
           {label}
@@ -34,13 +34,23 @@ function Gauge({
             style={{ width: `${Math.min(value, 100)}%` }}
           />
         </div>
-        <p className="mt-3 font-mono text-xs text-muted-foreground">{detail}</p>
+        <p className="mt-3 font-mono text-sm text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>
   );
 }
 
 const gb = (mb: number) => `${(mb / 1024).toFixed(1)} GB`;
+
+// Toolchain values are full binary paths (e.g. `\\?\E:\...\esbuild.exe`).
+// Show just the file name so long paths can't force the grid wider than
+// the viewport; the full path stays available via the title tooltip.
+const toolFile = (path: string | null | undefined) => {
+  if (!path) return null;
+  const clean = path.replace(/^\\\\\?\\/, "");
+  const parts = clean.split(/[/\\]+/).filter(Boolean);
+  return parts[parts.length - 1] ?? clean;
+};
 
 export function InsightsPage({
   metrics,
@@ -78,8 +88,8 @@ export function InsightsPage({
           {online ? "Node online" : "Node offline"}
         </Badge>
       </div>
-      <div className="scroll-thin min-h-0 flex-1 space-y-4 overflow-y-auto pb-1">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="scroll-thin min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto pb-1">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
         <Gauge
           label="CPU utilization"
           value={metrics.cpuPercent}
@@ -93,8 +103,8 @@ export function InsightsPage({
           icon={MemoryStick}
         />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Capacity</CardTitle>
             <CardDescription>Provisioned hardware on this node.</CardDescription>
@@ -104,7 +114,7 @@ export function InsightsPage({
               {capacity.map((row) => (
                 <div key={row.label} className="flex items-center justify-between py-2.5 text-sm first:pt-0 last:pb-0">
                   <dt className="text-muted-foreground">{row.label}</dt>
-                  <dd className="font-mono text-xs tabular-nums">{row.value}</dd>
+                  <dd className="font-mono text-sm tabular-nums">{row.value}</dd>
                 </div>
               ))}
               {capacity.length === 0 && (
@@ -113,7 +123,7 @@ export function InsightsPage({
             </dl>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="min-w-0 overflow-hidden">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Toolchain</CardTitle>
             <CardDescription>Bundled build tools.</CardDescription>
@@ -126,11 +136,13 @@ export function InsightsPage({
                   { label: "javy", value: toolchain?.javy },
                 ] as const
               ).map((row) => (
-                <div key={row.label} className="flex items-center justify-between py-2.5 text-sm first:pt-0 last:pb-0">
-                  <dt className="font-mono text-xs">{row.label}</dt>
-                  <dd>
-                    <Badge variant={row.value ? "secondary" : "outline"}>
-                      {row.value ?? "missing"}
+                <div key={row.label} className="flex min-w-0 items-center justify-between gap-3 py-2.5 text-sm first:pt-0 last:pb-0">
+                  <dt className="shrink-0 font-mono text-sm">{row.label}</dt>
+                  <dd className="min-w-0">
+                    <Badge variant={row.value ? "secondary" : "outline"} className="max-w-full">
+                      <span className="block min-w-0 max-w-full truncate" title={row.value ?? "missing"}>
+                        {toolFile(row.value) ?? "missing"}
+                      </span>
                     </Badge>
                   </dd>
                 </div>

@@ -42,7 +42,7 @@ export const CreateOptions = ({ onSelect }: CreateOptionsProps) => {
       </CardHeader>
       <CardContent className="space-y-2">
         <OptionRow
-          icon={<Globe className="h-4 w-4 text-green-600" />}
+          icon={<Globe className="h-4 w-4 text-[var(--ds-green-900)]" />}
           label="Start with Hello World!"
           onClick={() => onSelect("template")}
         />

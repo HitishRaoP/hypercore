@@ -88,7 +88,7 @@ function DottedPrefix() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-center gap-2 font-mono text-xs tracking-[0.22em] uppercase" style={{ color: ACCENT }}>
+    <p className="flex items-center gap-2 font-mono text-sm tracking-[0.22em] uppercase" style={{ color: ACCENT }}>
       <DottedPrefix />
       {children}
     </p>
@@ -138,7 +138,7 @@ function GridButton({
     <Link
       href={href}
       className={`inline-flex items-center rounded-[6px] font-mono tracking-[0.14em] text-white uppercase transition-opacity hover:opacity-90 ${
-        size === "sm" ? "gap-2.5 py-1 pr-1 pl-3.5 text-xs" : "gap-4 py-1.5 pr-1.5 pl-5 text-sm"
+        size === "sm" ? "gap-2.5 py-1 pr-1 pl-3.5 text-sm" : "gap-4 py-1.5 pr-1.5 pl-5 text-sm"
       } ${className}`}
       style={{ background: INK }}
     >
@@ -170,7 +170,7 @@ function EdgeMarks({
       {at.map((left) => (
         <span
           key={left}
-          className="absolute top-0 h-[11px] w-[11px] -translate-x-1/2 -translate-y-1/2 border border-neutral-400 bg-white shadow-[0_0_0_3px_white]"
+          className="absolute top-0 h-[11px] w-[11px] -translate-x-1/2 -translate-y-1/2 border border-[var(--ds-gray-500)] bg-white shadow-[0_0_0_3px_white]"
           style={{ left }}
         />
       ))}
@@ -180,7 +180,7 @@ function EdgeMarks({
 
 function Hatch() {
   return (
-    <div aria-hidden className="relative -mt-px border-b border-neutral-200">
+    <div aria-hidden className="relative -mt-px border-b border-[var(--ds-gray-200)]">
       <div
         className="h-10 w-full sm:h-12"
         style={{
@@ -398,28 +398,28 @@ export function LandingView() {
   const tab = appTabs.find((t) => t.id === activeTab) ?? appTabs[0]!;
 
   return (
-    <div className="min-h-screen bg-neutral-100 text-neutral-900 antialiased">
+    <div className="min-h-screen bg-[var(--ds-gray-100)] text-[var(--ds-gray-1000)] antialiased">
       <MotionStyles />
       {/* ------------------------------- header ------------------------------ */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur">
-        <div className="relative mx-auto flex h-16 w-full max-w-[1200px] items-center gap-4 border-x border-neutral-200 bg-white px-4 sm:px-6">
+      <header className="sticky top-0 z-40 border-b border-[var(--ds-gray-200)] bg-white/95 backdrop-blur">
+        <div className="relative mx-auto flex h-16 w-full max-w-[1200px] items-center gap-4 border-x border-[var(--ds-gray-200)] bg-white px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <HypercoreMark />
             <span className="font-mono text-sm font-bold tracking-[0.28em] uppercase">Hypercore</span>
-            <span className="hidden font-mono text-sm text-neutral-400 sm:inline">/</span>
+            <span className="hidden font-mono text-sm text-[var(--ds-gray-600)] sm:inline">/</span>
           </Link>
-          <nav className="ml-2 hidden items-center gap-7 font-jetbrains-mono text-xs tracking-[0.18em] text-neutral-500 uppercase lg:flex">
-            <a href="#applications" className="transition-colors hover:text-neutral-900">Applications</a>
-            <a href="#problem" className="transition-colors hover:text-neutral-900">Why it matters</a>
-            <a href="#usecases" className="transition-colors hover:text-neutral-900">Use cases</a>
-            <a href="#join" className="transition-colors hover:text-neutral-900">Join</a>
+          <nav className="ml-2 hidden items-center gap-7 font-jetbrains-mono text-sm tracking-[0.18em] text-[var(--ds-gray-900)] uppercase lg:flex">
+            <a href="#applications" className="transition-colors hover:text-[var(--ds-gray-1000)]">Applications</a>
+            <a href="#problem" className="transition-colors hover:text-[var(--ds-gray-1000)]">Why it matters</a>
+            <a href="#usecases" className="transition-colors hover:text-[var(--ds-gray-1000)]">Use cases</a>
+            <a href="#join" className="transition-colors hover:text-[var(--ds-gray-1000)]">Join</a>
           </nav>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <GridButton href="/download" size="sm" className="hidden sm:inline-flex">
               Get the agent <ArrowRight className="h-3.5 w-3.5" />
             </GridButton>
             <button
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-neutral-200 bg-white lg:hidden"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--ds-gray-200)] bg-white lg:hidden"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label="Toggle menu"
             >
@@ -430,8 +430,8 @@ export function LandingView() {
           <EdgeMarks at={["0%", "50%", "100%"]} className="lg:hidden" />
         </div>
         {menuOpen && (
-          <div className="border-t border-neutral-200 bg-white lg:hidden">
-            <nav className="mx-auto flex w-full max-w-[1200px] flex-col gap-1 border-x border-neutral-200 bg-white px-4 py-3 font-mono text-sm tracking-[0.14em] uppercase">
+          <div className="border-t border-[var(--ds-gray-200)] bg-white lg:hidden">
+            <nav className="mx-auto flex w-full max-w-[1200px] flex-col gap-1 border-x border-[var(--ds-gray-200)] bg-white px-4 py-3 font-mono text-sm tracking-[0.14em] uppercase">
               {[
                 ["#applications", "Applications"],
                 ["#problem", "Why it matters"],
@@ -442,7 +442,7 @@ export function LandingView() {
                   key={href}
                   href={href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-md px-2 py-2.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+                  className="rounded-md px-2 py-2.5 text-[var(--ds-gray-900)] transition-colors hover:bg-[var(--ds-gray-100)] hover:text-[var(--ds-gray-1000)]"
                 >
                   {label}
                 </a>
@@ -458,16 +458,16 @@ export function LandingView() {
       </header>
 
       {/* ------------------------------ framed ------------------------------ */}
-      <main className="mx-auto w-full max-w-[1200px] border-x border-neutral-200 bg-white">
+      <main className="mx-auto w-full max-w-[1200px] border-x border-[var(--ds-gray-200)] bg-white">
         {/* -------------------------------- hero ------------------------------- */}
         <section className="relative grid bg-white lg:grid-cols-2">
           {/* left */}
-          <div className="flex flex-col justify-center border-b border-neutral-200 bg-white p-6 sm:p-10 lg:border-r lg:border-b-0 lg:p-12 lg:py-18">
+          <div className="flex flex-col justify-center border-b border-[var(--ds-gray-200)] bg-white p-6 sm:p-10 lg:border-r lg:border-b-0 lg:p-12 lg:py-18">
             <SectionLabel>Now live — volunteer network</SectionLabel>
-            <h1 className="mt-6 text-[42px] leading-[1.02] font-medium tracking-tight text-balance text-neutral-900 sm:text-6xl">
+            <h1 className="mt-6 text-[42px] leading-[1.02] font-medium tracking-tight text-balance text-[var(--ds-gray-1000)] sm:text-6xl">
               Run apps on spare machines.
             </h1>
-            <p className="mt-6 max-w-md text-base leading-relaxed text-neutral-500">
+            <p className="mt-6 max-w-md text-base leading-relaxed text-[var(--ds-gray-900)]">
               Hypercore turns idle Windows PCs into your app fleet. Ship
               APIs, automations, and AI features in TypeScript — without
               renting a single server.
@@ -478,23 +478,23 @@ export function LandingView() {
               </GridButton>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button asChild variant="outline" size="sm" className="border-neutral-200 bg-white font-mono text-xs tracking-[0.12em] uppercase">
+              <Button asChild variant="outline" size="sm" className="border-[var(--ds-gray-200)] bg-white font-mono text-sm tracking-[0.12em] uppercase">
                 <Link href="/create">
                   <FileCode2 /> Write a function
                 </Link>
               </Button>
-              <span className="font-mono text-[11px] tracking-widest text-neutral-400 uppercase">
+              <span className="font-mono text-sm tracking-widest text-[var(--ds-gray-600)] uppercase">
                 Windows 10+ · x64 · Free
               </span>
             </div>
           </div>
           {/* right */}
-          <div className="relative overflow-hidden border-b border-neutral-200 bg-white">
+          <div className="relative overflow-hidden border-b border-[var(--ds-gray-200)] bg-white">
             <Halftone className="absolute inset-0" />
             <div className="relative flex h-full min-h-[420px] items-center justify-center p-6 sm:p-10">
-              <Card className="w-full max-w-md gap-0 overflow-hidden rounded-[4px] border-neutral-200 bg-white py-0 shadow-xl">
-                <CardHeader className="border-b border-neutral-200 px-5 py-4">
-                  <p className="font-mono text-xs tracking-[0.2em] text-neutral-500 uppercase">
+              <Card className="w-full max-w-md gap-0 overflow-hidden rounded-[4px] border-[var(--ds-gray-200)] bg-white py-0 shadow-xl">
+                <CardHeader className="border-b border-[var(--ds-gray-200)] px-5 py-4">
+                  <p className="font-mono text-sm tracking-[0.2em] text-[var(--ds-gray-900)] uppercase">
                     Functions — running
                   </p>
                 </CardHeader>
@@ -513,14 +513,14 @@ export function LandingView() {
                       >
                         <Check className="h-3 w-3 text-white" strokeWidth={3} />
                       </span>
-                      <span className={`text-[15px] ${done ? "text-neutral-900" : "text-neutral-400"}`}>
+                      <span className={`text-sm ${done ? "text-[var(--ds-gray-1000)]" : "text-[var(--ds-gray-600)]"}`}>
                         {label}
                       </span>
                     </div>
                   ))}
                 </CardContent>
-                <CardFooter className="border-t border-neutral-200 bg-white px-5 py-3.5">
-                  <p className="flex items-center gap-2 text-[13px] text-neutral-500">
+                <CardFooter className="border-t border-[var(--ds-gray-200)] bg-white px-5 py-3.5">
+                  <p className="flex items-center gap-2 text-sm text-[var(--ds-gray-900)]">
                     <span className="h-2 w-2" style={{ background: ACCENT }} />
                     Running 24/7. Your team ships while the crowd serves.
                   </p>
@@ -535,9 +535,9 @@ export function LandingView() {
         <Hatch />
 
         {/* ------------------------------- problem ------------------------------ */}
-        <section id="problem" className="relative scroll-mt-20 border-b border-neutral-200 bg-white px-6 py-14 sm:px-10 sm:py-20 lg:px-12">
+        <section id="problem" className="relative scroll-mt-20 border-b border-[var(--ds-gray-200)] bg-white px-6 py-14 sm:px-10 sm:py-20 lg:px-12">
           <SectionLabel>The problem</SectionLabel>
-          <h2 className="mt-6 max-w-4xl text-3xl leading-[1.12] font-medium tracking-tight text-balance text-neutral-900 sm:text-5xl">
+          <h2 className="mt-6 max-w-4xl text-3xl leading-[1.12] font-medium tracking-tight text-balance text-[var(--ds-gray-1000)] sm:text-5xl">
             Servers sit idle while side projects die on hosting bills.
             Hypercore turns scattered PCs into apps that run without
             constant checking.
@@ -545,17 +545,17 @@ export function LandingView() {
           <EdgeMarks at={["0%", "100%"]} />
         </section>
 
-        <section className="relative grid border-b border-neutral-200 bg-white md:grid-cols-3">
+        <section className="relative grid border-b border-[var(--ds-gray-200)] bg-white md:grid-cols-3">
           {problems.map((p, i) => (
             <div
               key={p.title}
-              className={`flex min-h-[380px] flex-col bg-white p-6 sm:p-8 ${i > 0 ? "border-t border-neutral-200 md:border-t-0 md:border-l md:border-neutral-200" : ""}`}
+              className={`flex min-h-[380px] flex-col bg-white p-6 sm:p-8 ${i > 0 ? "border-t border-[var(--ds-gray-200)] md:border-t-0 md:border-l md:border-[var(--ds-gray-200)]" : ""}`}
             >
-              <div className="flex min-h-40 flex-1 items-start text-neutral-900">
+              <div className="flex min-h-40 flex-1 items-start text-[var(--ds-gray-1000)]">
                 <NodeMatrix mode={p.mode} />
               </div>
-              <h3 className="mt-6 text-lg font-semibold tracking-tight text-neutral-900">{p.title}</h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-neutral-500">{p.body}</p>
+              <h3 className="mt-6 text-lg font-semibold tracking-tight text-[var(--ds-gray-1000)]">{p.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--ds-gray-900)]">{p.body}</p>
             </div>
           ))}
           <EdgeMarks at={["0%", "100%"]} className="md:hidden" />
@@ -565,9 +565,9 @@ export function LandingView() {
         <Hatch />
 
         {/* ----------------------------- applications ---------------------------- */}
-        <section id="applications" className="relative grid scroll-mt-20 border-b border-neutral-200 bg-white lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+        <section id="applications" className="relative grid scroll-mt-20 border-b border-[var(--ds-gray-200)] bg-white lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
           {/* tab list */}
-          <div className="border-b border-neutral-200 bg-white lg:border-r lg:border-b-0">
+          <div className="border-b border-[var(--ds-gray-200)] bg-white lg:border-r lg:border-b-0">
             <div className="flex gap-0 overflow-x-auto p-4 sm:p-6 lg:flex-col lg:gap-0 lg:p-8">
               {appTabs.map((t) => {
                 const active = t.id === activeTab;
@@ -575,7 +575,7 @@ export function LandingView() {
                   <button
                     key={t.id}
                     onClick={() => setActiveTab(t.id)}
-                    className={`relative shrink-0 px-4 py-4 text-left font-mono text-xs tracking-[0.18em] whitespace-nowrap uppercase transition-colors lg:px-5 lg:py-5 ${active ? "text-neutral-900" : "text-neutral-400 hover:text-neutral-900"}`}
+                    className={`relative shrink-0 px-4 py-4 text-left font-mono text-sm tracking-[0.18em] whitespace-nowrap uppercase transition-colors lg:px-5 lg:py-5 ${active ? "text-[var(--ds-gray-1000)]" : "text-[var(--ds-gray-600)] hover:text-[var(--ds-gray-1000)]"}`}
                   >
                     <span className="flex items-center gap-2.5">
                       <span className="h-2 w-2 shrink-0" style={{ background: active ? ACCENT : "#d4d4d8" }} />
@@ -599,15 +599,15 @@ export function LandingView() {
           <div className="relative overflow-hidden bg-white">
             <div className="relative grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:p-12">
               <div className="relative rounded-md bg-white">
-                <h3 className="text-3xl font-medium tracking-tight text-balance text-neutral-900 sm:text-4xl">
+                <h3 className="text-3xl font-medium tracking-tight text-balance text-[var(--ds-gray-1000)] sm:text-4xl">
                   {tab.title}
                   <br />
-                  <span className="text-neutral-400">{tab.accentTitle}</span>
+                  <span className="text-[var(--ds-gray-600)]">{tab.accentTitle}</span>
                 </h3>
-                <p className="mt-4 bg-white text-[15px] leading-relaxed text-neutral-600">{tab.body}</p>
+                <p className="mt-4 bg-white text-sm leading-relaxed text-[var(--ds-gray-900)]">{tab.body}</p>
                 <div className="mt-6 flex flex-wrap gap-2">
                   {tab.chips.map((c) => (
-                    <Button key={c} variant="outline" size="sm" className="pointer-events-none border-neutral-200 bg-white font-normal text-neutral-700">
+                    <Button key={c} variant="outline" size="sm" className="pointer-events-none border-[var(--ds-gray-200)] bg-white font-normal text-[var(--ds-gray-900)]">
                       {c}
                     </Button>
                   ))}
@@ -615,7 +615,7 @@ export function LandingView() {
               </div>
               <div className="relative">
                 <FlowField />
-                <Card className="relative gap-0 self-start rounded-[4px] border-neutral-200 bg-white py-0 shadow-lg">
+                <Card className="relative gap-0 self-start rounded-[4px] border-[var(--ds-gray-200)] bg-white py-0 shadow-lg">
                   <CardContent className="bg-white px-0 py-2">
                     {tab.checks.map((c, i) => (
                       <div key={c}>
@@ -626,19 +626,19 @@ export function LandingView() {
                           >
                             <Check className="h-3 w-3 text-white" strokeWidth={3} />
                           </span>
-                          <span className="text-[15px] text-neutral-900">{c}</span>
+                          <span className="text-sm text-[var(--ds-gray-1000)]">{c}</span>
                           {i === tab.checks.length - 1 && (
-                            <span className="ml-auto font-mono text-[11px] tracking-widest uppercase" style={{ color: ACCENT }}>
+                            <span className="ml-auto font-mono text-sm tracking-widest uppercase" style={{ color: ACCENT }}>
                               Live
                             </span>
                           )}
                         </div>
-                        {i < tab.checks.length - 1 && <Separator className="bg-neutral-200" />}
+                        {i < tab.checks.length - 1 && <Separator className="bg-[var(--ds-gray-200)]" />}
                       </div>
                     ))}
                   </CardContent>
-                  <CardFooter className="border-t border-neutral-200 bg-white px-5 py-3">
-                    <p className="font-mono text-[11px] tracking-[0.16em] text-neutral-500 uppercase">{tab.foot}</p>
+                  <CardFooter className="border-t border-[var(--ds-gray-200)] bg-white px-5 py-3">
+                    <p className="font-mono text-sm tracking-[0.16em] text-[var(--ds-gray-900)] uppercase">{tab.foot}</p>
                   </CardFooter>
                 </Card>
               </div>
@@ -656,20 +656,20 @@ export function LandingView() {
         <Hatch />
 
         {/* ------------------------------- use cases ----------------------------- */}
-        <section id="usecases" className="relative scroll-mt-20 border-b border-neutral-200 bg-white px-6 py-14 sm:px-10 sm:py-20 lg:px-12">
+        <section id="usecases" className="relative scroll-mt-20 border-b border-[var(--ds-gray-200)] bg-white px-6 py-14 sm:px-10 sm:py-20 lg:px-12">
           <SectionLabel>Use cases</SectionLabel>
           <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
-            <h2 className="max-w-xl text-3xl font-medium tracking-tight text-balance text-neutral-900 sm:text-5xl">
+            <h2 className="max-w-xl text-3xl font-medium tracking-tight text-balance text-[var(--ds-gray-1000)] sm:text-5xl">
               What will you run on it?
             </h2>
           </div>
-          <div className="mt-10 grid gap-px overflow-hidden rounded-[4px] border border-neutral-200 bg-neutral-200 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-px overflow-hidden rounded-[4px] border border-[var(--ds-gray-200)] bg-[var(--ds-gray-200)] sm:grid-cols-2 lg:grid-cols-3">
             {useCases.map((u) => (
-              <div key={u.title} className="flex min-h-[260px] flex-col bg-white p-6 transition-colors hover:bg-neutral-50 sm:p-7">
+              <div key={u.title} className="flex min-h-[260px] flex-col bg-white p-6 transition-colors hover:bg-[var(--ds-background-200)] sm:p-7">
                 <u.icon className="h-6 w-6" style={{ color: ACCENT }} strokeWidth={1.7} />
-                <h3 className="mt-4 text-lg font-semibold tracking-tight text-neutral-900">{u.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-neutral-500">{u.body}</p>
-                <p className="mt-4 font-mono text-[10px] tracking-[0.2em] text-neutral-400 uppercase">{u.foot}</p>
+                <h3 className="mt-4 text-lg font-semibold tracking-tight text-[var(--ds-gray-1000)]">{u.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--ds-gray-900)]">{u.body}</p>
+                <p className="mt-4 font-mono text-sm tracking-[0.2em] text-[var(--ds-gray-600)] uppercase">{u.foot}</p>
               </div>
             ))}
           </div>
@@ -693,7 +693,7 @@ export function LandingView() {
                 <rect width="100%" height="100%" fill="url(#join-dots)" />
               </svg>
               {/* bottom glow */}
-              <div className="absolute bottom-10 left-1/2 h-48 w-[640px] max-w-[90%] -translate-x-1/2 rounded-[100%] bg-amber-100/80 blur-3xl" aria-hidden />
+              <div className="absolute bottom-10 left-1/2 h-48 w-[640px] max-w-[90%] -translate-x-1/2 rounded-[100%] bg-[var(--ds-amber-100)]/80 blur-3xl" aria-hidden />
               {/* floating dashed tiles */}
               {floatTiles.map((t) => (
                 <span
@@ -716,7 +716,7 @@ export function LandingView() {
                 <h2 className="mx-auto max-w-2xl text-4xl font-medium tracking-tight text-balance sm:text-6xl">
                   Run anything on the crowd.
                 </h2>
-                <p className="mx-auto mt-5 max-w-xl text-[15px] leading-relaxed text-white/85 sm:text-base">
+                <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
                   Join thousands of builders who ditched hosting bills and
                   deployed on spare PCs instead. Start running for free —
                   no credit card required.
@@ -724,13 +724,13 @@ export function LandingView() {
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
                   <Link
                     href="/download"
-                    className="inline-flex h-12 items-center rounded-full bg-white px-7 text-[15px] font-semibold text-neutral-900 transition-transform hover:scale-[1.02]"
+                    className="inline-flex h-12 items-center rounded-full bg-white px-7 text-sm font-semibold text-[var(--ds-gray-1000)] transition-transform hover:scale-[1.02]"
                   >
                     Download the agent
                   </Link>
                   <Link
                     href="/create"
-                    className="inline-flex h-12 items-center rounded-full border border-white/25 bg-white/15 px-7 text-[15px] font-medium text-white backdrop-blur transition-colors hover:bg-white/25"
+                    className="inline-flex h-12 items-center rounded-full border border-white/25 bg-white/15 px-7 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-white/25"
                   >
                     Write a function
                   </Link>
@@ -753,16 +753,16 @@ export function LandingView() {
         </section>
 
         {/* -------------------------------- footer ------------------------------- */}
-        <footer className="relative border-t border-neutral-200 bg-white">
+        <footer className="relative border-t border-[var(--ds-gray-200)] bg-white">
           <div className="flex flex-col gap-4 px-6 py-7 sm:flex-row sm:items-center sm:px-10 lg:px-12">
-            <span className="flex items-center gap-2 font-mono text-xs font-bold tracking-[0.28em] text-neutral-900 uppercase">
+            <span className="flex items-center gap-2 font-mono text-sm font-bold tracking-[0.28em] text-[var(--ds-gray-1000)] uppercase">
               <HypercoreMark className="h-5 w-5" /> Hypercore
             </span>
-            <span className="text-xs text-neutral-500">Volunteer compute for everyday apps</span>
-            <span className="flex gap-5 font-mono text-xs tracking-[0.14em] text-neutral-500 uppercase sm:ml-auto">
-              <Link href="/download" className="transition-colors hover:text-neutral-900">Download</Link>
-              <Link href="/create" className="transition-colors hover:text-neutral-900">Create</Link>
-              <a href="https://github.com/HitishRaoP/hypercore" target="_blank" rel="noreferrer" className="transition-colors hover:text-neutral-900">GitHub</a>
+            <span className="text-sm text-[var(--ds-gray-900)]">Volunteer compute for everyday apps</span>
+            <span className="flex gap-5 font-mono text-sm tracking-[0.14em] text-[var(--ds-gray-900)] uppercase sm:ml-auto">
+              <Link href="/download" className="transition-colors hover:text-[var(--ds-gray-1000)]">Download</Link>
+              <Link href="/create" className="transition-colors hover:text-[var(--ds-gray-1000)]">Create</Link>
+              <a href="https://github.com/HitishRaoP/hypercore" target="_blank" rel="noreferrer" className="transition-colors hover:text-[var(--ds-gray-1000)]">GitHub</a>
             </span>
           </div>
         </footer>

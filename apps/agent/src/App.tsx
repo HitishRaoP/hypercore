@@ -50,7 +50,17 @@ function App() {
   const [error, setError] = useState("");
   const [toolchain, setToolchain] = useState<ToolchainStatus | null>(null);
   const [coordinatorUrl, setCoordinatorUrl] = useState("");
-  const [page, setPage] = useState<AgentPage>("logs");
+  const [page, setPage] = useState<AgentPage>(() => {
+    try {
+      const saved = localStorage.getItem("hypercore-agent-page");
+      if (saved === "machine" || saved === "logs" || saved === "deployments" || saved === "insights" || saved === "settings") {
+        return saved;
+      }
+    } catch {
+      /* storage unavailable — fall through to the default */
+    }
+    return "machine";
+  });
   const [live, setLive] = useState(true);
 
   const machineId = info?.machineId ?? restoredMachineId;
@@ -96,6 +106,13 @@ function App() {
       cancelled = true;
     };
   }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("hypercore-agent-page", page);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [page]);
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     void listen<MetricsTick>("metrics_tick", (event) =>
@@ -162,7 +179,7 @@ function App() {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-background text-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        <p className="mt-4 text-sm text-muted-foreground">
+        <p className="mt-4 text-base text-muted-foreground">
           Checking for an existing registration…
         </p>
       </div>
@@ -178,19 +195,15 @@ function App() {
               <div className="mb-6 grid size-14 place-items-center rounded-2xl border bg-muted">
                 <ScanSearch className="size-6 text-muted-foreground" />
               </div>
-              <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+              <p className="font-mono text-base tracking-[0.2em] text-muted-foreground uppercase">
                 Worker agent
               </p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight">
                 Ready to inspect this machine
               </h2>
-              <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+              <p className="mt-3 max-w-sm text-base leading-6 text-muted-foreground">
                 Collect local capacity and network details before connecting this
                 worker to the HyperCore coordinator.
-              </p>
-              <p className="mt-4 max-w-sm font-mono text-xs leading-5 break-all text-muted-foreground">
-                Build tools (bundled): esbuild {toolchain?.esbuild ?? "missing"} ·
-                javy {toolchain?.javy ?? "missing"}
               </p>
               <Button
                 disabled={loading}
@@ -205,7 +218,7 @@ function App() {
           ) : (
             <div className="space-y-6">
               <div>
-                <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
+                <p className="font-mono text-base tracking-[0.2em] text-muted-foreground uppercase">
                   Step 2 of 3
                 </p>
                 <h2 className="mt-2 text-xl font-semibold tracking-tight">
@@ -217,7 +230,7 @@ function App() {
             </div>
           )}
           {error && (
-            <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-3 text-sm font-medium text-white shadow-lg">
+            <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-3 text-base font-medium text-white shadow-lg">
               <AlertCircle className="size-4" />
               {error}
             </div>
@@ -309,7 +322,7 @@ function App() {
           )}
         </div>
         {error && (
-          <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-3 text-sm font-medium text-white shadow-lg">
+          <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg bg-destructive px-4 py-3 text-base font-medium text-white shadow-lg">
             <AlertCircle className="size-4" />
             {error}
           </div>

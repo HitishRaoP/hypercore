@@ -47,7 +47,7 @@ const CopyButton = ({ text }: { text: string }) => {
       aria-label="Copy to clipboard"
       className="shrink-0"
     >
-      {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? <Check className="h-3.5 w-3.5 text-[var(--ds-green-900)]" /> : <Copy className="h-3.5 w-3.5" />}
     </Button>
   );
 };
@@ -61,8 +61,8 @@ const UrlRow = ({
   url: string;
   hint?: string;
 }) => (
-  <div className="rounded-xl border bg-zinc-50 p-4">
-    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+  <div className="rounded-xl border bg-[var(--ds-gray-100)] p-4">
+    <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
       {label}
     </p>
     <div className="mt-1 flex items-center gap-1">
@@ -70,7 +70,7 @@ const UrlRow = ({
         href={url}
         target="_blank"
         rel="noreferrer"
-        className="min-w-0 flex-1 truncate font-mono text-sm text-blue-600 underline underline-offset-2 hover:text-blue-800"
+        className="min-w-0 flex-1 truncate font-mono text-sm text-[var(--ds-blue-900)] underline underline-offset-2 hover:text-[var(--ds-blue-900)]"
       >
         {url}
       </a>
@@ -81,7 +81,7 @@ const UrlRow = ({
         </a>
       </Button>
     </div>
-    {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
   </div>
 );
 
@@ -109,9 +109,9 @@ export const DeploySuccess = ({ result, onBack, onReset, className }: DeploySucc
       <CardHeader className="shrink-0">
         <div className="flex items-center gap-2">
           {routed ? (
-            <CircleCheck className="h-5 w-5 shrink-0 text-green-600" />
+            <CircleCheck className="h-5 w-5 shrink-0 text-[var(--ds-green-900)]" />
           ) : (
-            <Server className="h-5 w-5 shrink-0 text-amber-600" />
+            <Server className="h-5 w-5 shrink-0 text-[var(--ds-amber-900)]" />
           )}
           <h1 className="text-xl">
             {routed ? "Deployment live" : "Deployment stored"}
@@ -136,7 +136,7 @@ export const DeploySuccess = ({ result, onBack, onReset, className }: DeploySucc
           hint="Immutable per-deployment URL."
         />
 
-        <div className="divide-y divide-zinc-100 rounded-xl border px-4 py-2">
+        <div className="divide-y divide-[var(--ds-gray-200)] rounded-xl border px-4 py-2">
           <MetaRow label="Deployment">
             <span className="inline-flex items-center gap-1">
               {result.deploymentId}
@@ -148,8 +148,8 @@ export const DeploySuccess = ({ result, onBack, onReset, className }: DeploySucc
           <MetaRow label="Entrypoint">{result.entrypoint}</MetaRow>
           <MetaRow label="Status">
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                routed ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm font-medium ${
+                routed ? "bg-[var(--ds-green-100)] text-[var(--ds-green-900)]" : "bg-[var(--ds-amber-100)] text-[var(--ds-amber-900)]"
               }`}
             >
               {routed ? <Rocket className="h-3 w-3" /> : <Package className="h-3 w-3" />}

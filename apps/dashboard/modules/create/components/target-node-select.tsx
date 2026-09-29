@@ -44,7 +44,7 @@ export const OsIcon = ({ osName, className }: { osName?: string; className?: str
 export const NodeSpecsLine = ({ node }: { node: MachineNode }) => {
   if (isLegacyNode(node)) {
     return (
-      <span className="text-amber-700">
+      <span className="text-[var(--ds-amber-900)]">
         Legacy agent — hardware details unavailable. Update the agent to report
         specs.
       </span>
@@ -85,14 +85,14 @@ export const TargetNodeSelect = ({
               <span className="flex w-full min-w-0 items-center gap-2.5">
                 <OsIcon osName={selected.osName} />
                 <span className="min-w-0 truncate text-left">
-                  <span className="block truncate font-sans text-[15px] font-medium">
+                  <span className="block truncate font-sans text-sm font-medium">
                     {selected.hostname || "Unnamed node"}
                   </span>
                 </span>
                 <span
                   className={cn(
                     "ml-auto h-2 w-2 shrink-0 rounded-full",
-                    selected.online ? "bg-green-500" : "bg-zinc-300",
+                    selected.online ? "bg-[var(--ds-green-700)]" : "bg-[var(--ds-gray-500)]",
                   )}
                 />
               </span>
@@ -121,17 +121,17 @@ export const TargetNodeSelect = ({
                       <span
                         className={cn(
                           "h-2 w-2 shrink-0 rounded-full",
-                          node.online ? "bg-green-500" : "bg-zinc-300",
+                          node.online ? "bg-[var(--ds-green-700)]" : "bg-[var(--ds-gray-500)]",
                         )}
                       />
                     </span>
-                    <span className="block truncate font-mono text-xs text-muted-foreground">
+                    <span className="block truncate font-mono text-sm text-muted-foreground">
                       {node.machineId}
                     </span>
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span className="block truncate text-sm text-muted-foreground">
                       <NodeSpecsLine node={node} />
                     </span>
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block text-sm text-muted-foreground">
                       {node.online ? "Online" : "Offline — deploy will be stored"} ·{" "}
                       {node.cpuBrand || "CPU unknown"}
                     </span>

@@ -184,7 +184,7 @@ export function LogsPage({
         <Card>
           <div className="p-8 text-center">
             <p className="text-sm font-medium">Could not reach the coordinator</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">{error}</p>
+            <p className="mt-1 font-mono text-sm text-muted-foreground">{error}</p>
             <Button variant="outline" size="sm" onClick={onRefresh} className="mt-4">
               Retry
             </Button>
@@ -224,7 +224,7 @@ export function LogsPage({
                           onClick={() => setSelectedId(isSelected ? null : inv.invocationId)}
                           className="cursor-pointer"
                         >
-                          <TableCell className="pl-6 font-mono text-xs whitespace-nowrap text-muted-foreground">
+                          <TableCell className="pl-6 font-mono text-sm whitespace-nowrap text-muted-foreground">
                             {formatLogTime(inv.startedAt)}
                           </TableCell>
                           <TableCell>
@@ -237,13 +237,13 @@ export function LogsPage({
                               </Badge>
                             </span>
                           </TableCell>
-                          <TableCell className="max-w-40 truncate text-xs text-muted-foreground">
+                          <TableCell className="max-w-40 truncate text-sm text-muted-foreground">
                             {host}
                           </TableCell>
-                          <TableCell className="max-w-56 truncate font-mono text-xs">
+                          <TableCell className="max-w-56 truncate font-mono text-sm">
                             {inv.path}
                           </TableCell>
-                          <TableCell className="max-w-72 truncate pr-6 text-xs text-muted-foreground">
+                          <TableCell className="max-w-72 truncate pr-6 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <span className="truncate">{detail ?? "—"}</span>
                               {detail && (
@@ -255,14 +255,14 @@ export function LogsPage({
                         {isSelected && detail && (
                           <TableRow className="bg-muted/40 hover:bg-muted/40">
                             <TableCell colSpan={5} className="px-6 py-3 whitespace-normal">
-                              <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-muted-foreground">
+                              <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-sm text-muted-foreground">
                                 <span>worker {inv.workerName}</span>
                                 <span>duration {formatDuration(inv.durationMs)}</span>
                                 {inv.exitCode !== null && inv.exitCode !== undefined && (
                                   <span>exit {inv.exitCode}</span>
                                 )}
                               </div>
-                              <pre className="mt-2 overflow-x-auto rounded-md border bg-background px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
+                              <pre className="mt-2 overflow-x-auto rounded-md border bg-background px-3 py-2 font-mono text-sm leading-5 whitespace-pre-wrap">
                                 {detail}
                               </pre>
                             </TableCell>
@@ -276,7 +276,7 @@ export function LogsPage({
               </Table>
             </div>
             <div className="shrink-0 border-t bg-muted/40 px-6 py-3">
-              <p className="font-mono text-xs text-muted-foreground uppercase">
+              <p className="font-mono text-sm text-muted-foreground uppercase">
                 {filtered.length} of {invocations.length} logs
               </p>
             </div>

@@ -150,15 +150,15 @@ export function AppSidebar({
                          mode="dither"
                          size={28}
                        />
-                  <div className="grid flex-1 text-left text-sm leading-tight">
+                  <div className="grid flex-1 text-left text-sm leading-normal">
                     <span className="truncate font-medium">{hostname || "Worker"}</span>
-                    <span className="truncate font-mono text-xs">{shortId(machineId)}</span>
+                    <span className="truncate font-mono text-sm">{shortId(machineId)}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={4} className="min-w-56">
-                <DropdownMenuLabel className="font-mono text-xs font-normal">
+                <DropdownMenuLabel className="font-mono text-sm font-normal">
                   {shortId(machineId)}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

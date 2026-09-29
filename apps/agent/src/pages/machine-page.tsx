@@ -39,7 +39,7 @@ export function MachinePage({
       <Card>
         <CardContent className="flex flex-wrap items-center gap-4">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
+            <p className="text-sm font-medium tracking-wider text-muted-foreground uppercase">
               Machine ID
             </p>
             <button
@@ -54,7 +54,7 @@ export function MachinePage({
                 <Copy className="size-3.5 shrink-0 text-muted-foreground" />
               )}
             </button>
-            <p className="mt-2 font-mono text-xs break-all text-muted-foreground">
+            <p className="mt-2 font-mono text-sm break-all text-muted-foreground">
               Node {registration.nodeId} · {registration.assignedRegion} · {coordinatorUrl}
             </p>
           </div>

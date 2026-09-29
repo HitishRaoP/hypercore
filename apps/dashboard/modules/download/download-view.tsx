@@ -178,11 +178,11 @@ export const DownloadView = () => {
           <Card>
             <CardContent className="flex flex-wrap items-center gap-3 py-4">
               <span className="flex items-center gap-1.5 text-sm font-medium">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-[var(--ds-green-900)]" />
                 Latest: {versionLabel}
               </span>
               {release.published_at && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm text-muted-foreground">
                   Published{" "}
                   {new Date(release.published_at).toLocaleDateString()}
                 </span>
@@ -205,7 +205,7 @@ export const DownloadView = () => {
 
           <Card className="relative">
             {onWindows && (
-              <span className="absolute -top-2.5 left-4 rounded-full border bg-background px-2 py-0.5 text-[11px] font-medium">
+              <span className="absolute -top-2.5 left-4 rounded-full border bg-background px-2 py-0.5 text-sm font-medium">
                 Recommended for this device
               </span>
             )}
@@ -221,7 +221,7 @@ export const DownloadView = () => {
             <CardContent className="space-y-3">
               {windowsAsset ? (
                 <>
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <FileDown className="h-3.5 w-3.5" />
                     <span className="truncate">{windowsAsset.name}</span>
                     <span className="shrink-0">
@@ -237,7 +237,7 @@ export const DownloadView = () => {
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     No Windows installer attached to this release.
                   </p>
                   <Button className="w-full" variant="outline" asChild>
@@ -248,7 +248,7 @@ export const DownloadView = () => {
                   </Button>
                 </>
               )}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Run the .msi installer and follow the setup wizard.
               </p>
             </CardContent>
@@ -268,7 +268,7 @@ export const DownloadView = () => {
       )}
 
       {status !== "loading" && (
-        <p className="text-center text-xs text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           Installers are published on the{" "}
           <a
             className="underline underline-offset-4"

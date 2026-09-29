@@ -47,7 +47,7 @@ export function Titlebar() {
     >
       <div className="flex items-center gap-2 px-3">
         <Boxes className="size-3.5" />
-        <span className="text-xs font-medium">HyperCore Agent</span>
+        <span className="text-sm">HyperCore Agent</span>
       </div>
       {tauri && (
         <div className="flex h-full items-stretch">

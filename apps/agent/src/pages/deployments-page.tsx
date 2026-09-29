@@ -45,7 +45,7 @@ export function DeploymentsPage({
         <Card>
           <div className="p-8 text-center">
             <p className="text-sm font-medium">Could not reach the coordinator</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">{error}</p>
+            <p className="mt-1 font-mono text-sm text-muted-foreground">{error}</p>
             <Button variant="outline" size="sm" onClick={onRefresh} className="mt-4">
               Retry
             </Button>
@@ -77,10 +77,10 @@ export function DeploymentsPage({
                     <TableCell className="max-w-48 truncate pl-6 font-medium">
                       {deployment.workerName}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground" title={deployment.deploymentId}>
+                    <TableCell className="font-mono text-sm text-muted-foreground" title={deployment.deploymentId}>
                       {shortId(deployment.deploymentId)}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
+                    <TableCell className="font-mono text-sm text-muted-foreground">
                       {deployment.entrypoint}
                     </TableCell>
                     <TableCell>
@@ -88,7 +88,7 @@ export function DeploymentsPage({
                         {deployment.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="pr-6 text-right text-xs text-muted-foreground">
+                    <TableCell className="pr-6 text-right text-sm text-muted-foreground">
                       {timeAgo(deployment.createdAt)}
                     </TableCell>
                   </TableRow>
@@ -98,7 +98,7 @@ export function DeploymentsPage({
           </Table>
           </div>
           <div className="shrink-0 border-t bg-muted/40 px-6 py-3">
-            <p className="font-mono text-xs text-muted-foreground uppercase">
+            <p className="font-mono text-sm text-muted-foreground uppercase">
               {deployments.length} deployment{deployments.length === 1 ? "" : "s"}
             </p>
           </div>
