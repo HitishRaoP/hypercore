@@ -28,9 +28,21 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/icon.ico"
     ],
     "resources": ["resources/tools"]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1MjQ5MEI1NDVFNzI2MEQKUldRTkp1ZEZ0WkFrOVZpZDN4bTFQcDZ1cjJ3YjRaN1oremRpczVDeC94K01CUko5MVRrQlRueEkK",
+      "endpoints": [
+        "https://github.com/HitishRaoP/hypercore/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

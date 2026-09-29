@@ -194,6 +194,8 @@ async fn register_node(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "Show HyperCore Worker", true, None::<&str>)?;
             let hide = MenuItem::with_id(app, "hide", "Hide window", true, None::<&str>)?;

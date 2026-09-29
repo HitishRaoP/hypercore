@@ -4,7 +4,13 @@ name: Release agent
 #   1. (optional, keeps repo files in sync)  bun ./apps/agent/scripts/sync-agent-version.mjs 0.2.0
 #   2. git tag v0.2.0 && git push origin v0.2.0
 #   3. This workflow builds the Tauri agent for Windows and attaches the
-#      installer to the GitHub Release for that tag.
+#      installer to the GitHub Release for that tag, plus the signed
+#      `latest.json` manifest the in-app auto-updater polls.
+#
+# Required repository secret (auto-update cannot build without it):
+#   TAURI_SIGNING_PRIVATE_KEY           — contents of ~/.tauri/hypercore-agent.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  — only if the key has a password
+#
 # Or: run it manually from the Actions tab with a version input — the
 # `prepare` job creates and pushes the tag for you.
 
@@ -89,7 +95,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -118,6 +124,10 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Required for `bundle.createUpdaterArtifacts` — without it the build
+          # fails and no signed update artifacts (or latest.json) are produced.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           projectPath: apps/agent
           tagName: ${{ needs.prepare.outputs.tag }}

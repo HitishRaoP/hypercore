@@ -13,12 +13,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@hypercore/ui/components/sidebar";
-import { AlertCircle, ArrowRight, Loader2, ScanSearch } from "lucide-react";
+import { AlertCircle, ArrowRight, Download, Loader2, ScanSearch } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AGENT_PAGE_TITLES, AppSidebar, type AgentPage } from "./components/app-sidebar";
 import { MachineDetailsCard } from "./components/MachineDetailsCard";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { useActivity } from "./hooks/use-activity";
+import { useUpdater } from "./hooks/use-updater";
 import { DeploymentsPage } from "./pages/deployments-page";
 import { InsightsPage } from "./pages/insights-page";
 import { LogsPage } from "./pages/logs-page";
@@ -61,6 +62,10 @@ function App() {
     return "machine";
   });
   const [live, setLive] = useState(true);
+  // The updater lives above the router so the background check runs even
+  // when the user never opens Settings.
+  const { state: update, check: checkForUpdate, install: installUpdate } =
+    useUpdater();
 
   const machineId = info?.machineId ?? restoredMachineId;
   const registered = Boolean(registration && machineId);
@@ -263,13 +268,25 @@ function App() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <Badge variant={activity.data?.online ? "success" : "secondary"}>
-            {activity.data?.online
-              ? "Connected"
-              : activity.error
-                ? "Unreachable"
-                : "Idle"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {update.phase === "available" && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setPage("settings")}
+              >
+                <Download />
+                Update to {update.version}
+              </Button>
+            )}
+            <Badge variant={activity.data?.online ? "success" : "secondary"}>
+              {activity.data?.online
+                ? "Connected"
+                : activity.error
+                  ? "Unreachable"
+                  : "Idle"}
+            </Badge>
+          </div>
         </header>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">
           {page === "machine" && (
@@ -320,6 +337,9 @@ function App() {
               registration={registration}
               coordinatorUrl={coordinatorUrl}
               machineId={machineId}
+              update={update}
+              onCheckUpdate={() => void checkForUpdate()}
+              onInstallUpdate={() => void installUpdate()}
               onUnregister={() => void unregister()}
             />
           )}

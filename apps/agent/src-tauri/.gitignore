@@ -11,3 +11,9 @@
 # Never commit binaries; each build machine fetches its native copy.
 /resources/tools/*
 !/resources/tools/.gitkeep
+
+# Updater signing keys must never live in the repo. The public key is
+# committed inside tauri.conf.json; the private key belongs in the
+# TAURI_SIGNING_PRIVATE_KEY GitHub secret only.
+*.key
+*.key.pub
