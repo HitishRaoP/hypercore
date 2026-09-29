@@ -130,6 +130,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
         with:
           projectPath: apps/agent
+          # The repo is a bun workspace (root package.json pins devEngines
+          # packageManager=bun), so npm refuses to run any script. Run the
+          # tauri CLI through bun instead of tauri-action's npm default.
+          tauriScript: bun run tauri
           tagName: ${{ needs.prepare.outputs.tag }}
           releaseName: "Hypercore Agent ${{ needs.prepare.outputs.tag }} (Windows)"
           releaseBody: "Windows installer for the Hypercore Agent. See the assets below."
