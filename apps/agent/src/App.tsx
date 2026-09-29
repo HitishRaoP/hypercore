@@ -1,14 +1,14 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { AlertCircle, ArrowRight, Check, Copy, LogOut, ScanSearch } from "lucide-react";
+import { Button } from "@hypercore/ui/components/button";
+import { Card, CardContent } from "@hypercore/ui/components/card";
+import { AlertCircle, ArrowRight, Check, Copy, Loader2, LogOut, ScanSearch } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ActivityView } from "./components/ActivityView";
 import { Header } from "./components/Header";
 import { LiveMetricsDashboard } from "./components/LiveMetricsDashboard";
 import { MachineDetailsCard } from "./components/MachineDetailsCard";
 import { RegistrationForm } from "./components/RegistrationForm";
-import { Button } from "./components/ui/Button";
-import { Card } from "./components/ui/Card";
 import type {
   MachineInfo,
   MetricsTick,
@@ -40,33 +40,36 @@ function NodeIdentityBar({
     }
   };
   return (
-    <Card className="flex flex-wrap items-center gap-x-5 gap-y-3 px-5 py-4">
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] uppercase tracking-wider text-zinc-500">Machine ID</p>
-        <button
-          onClick={() => void copy()}
-          title="Copy machine ID"
-          className="mt-1 flex max-w-full items-center gap-2 font-mono text-xs text-zinc-200 transition hover:text-white"
+    <Card>
+      <CardContent className="flex flex-wrap items-center gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">Machine ID</p>
+          <button
+            onClick={() => void copy()}
+            title="Copy machine ID"
+            className="mt-1 flex max-w-full items-center gap-2 font-mono text-sm transition-colors hover:text-muted-foreground"
+          >
+            <span className="truncate">{machineId}</span>
+            {copied ? (
+              <Check className="size-3.5 shrink-0" />
+            ) : (
+              <Copy className="size-3.5 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+          <p className="mt-2 font-mono text-xs text-muted-foreground">
+            Node {registration.nodeId} · {registration.assignedRegion} · {coordinatorUrl}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onUnregister}
+          title="Forget this registration on this machine"
         >
-          <span className="truncate">{machineId}</span>
-          {copied ? (
-            <Check className="size-3.5 shrink-0 text-emerald-400" />
-          ) : (
-            <Copy className="size-3.5 shrink-0 text-zinc-500" />
-          )}
-        </button>
-        <p className="mt-2 font-mono text-[11px] text-zinc-600">
-          Node {registration.nodeId} · {registration.assignedRegion} · {coordinatorUrl}
-        </p>
-      </div>
-      <button
-        onClick={onUnregister}
-        title="Forget this registration on this machine"
-        className="flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-500 transition hover:border-zinc-700 hover:text-zinc-200"
-      >
-        <LogOut className="size-3.5" />
-        Disconnect
-      </button>
+          <LogOut />
+          Disconnect
+        </Button>
+      </CardContent>
     </Card>
   );
 }
@@ -186,31 +189,31 @@ function App() {
     setRestoredMachineId("");
   };
   return (
-    <div className="min-h-screen bg-black text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <Header online={registered} />
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <main className="mx-auto max-w-5xl px-6 py-8">
         {restoring ? (
           <div className="mx-auto flex min-h-[480px] max-w-lg flex-col items-center justify-center text-center">
-            <span className="size-6 animate-spin rounded-full border-2 border-zinc-700 border-t-zinc-200" />
-            <p className="mt-5 text-sm text-zinc-400">
+            <Loader2 className="size-6 animate-spin text-muted-foreground" />
+            <p className="mt-4 text-sm text-muted-foreground">
               Checking for an existing registration…
             </p>
           </div>
         ) : registered && registration ? (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <NodeIdentityBar
               machineId={machineId}
               registration={registration}
               coordinatorUrl={coordinatorUrl}
               onUnregister={() => void unregister()}
             />
-            <div className="flex gap-1 rounded-lg border border-zinc-800 bg-[#0a0a0a] p-1">
+            <div className="flex gap-1 rounded-lg border bg-muted p-1">
               {(["activity", "metrics"] as const).map((name) => (
                 <button
                   key={name}
                   onClick={() => setTab(name)}
-                  className={`flex-1 rounded-md px-3 py-1.5 text-xs capitalize transition-colors ${
-                    tab === name ? "bg-zinc-800 text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+                  className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                    tab === name ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {name}
@@ -225,40 +228,40 @@ function App() {
           </div>
         ) : !info ? (
           <div className="mx-auto flex min-h-[480px] max-w-lg flex-col items-center justify-center text-center">
-            <div className="mb-6 grid size-14 place-items-center rounded-2xl border border-zinc-800 bg-[#0a0a0a]">
-              <ScanSearch className="size-6 text-zinc-400" />
+            <div className="mb-6 grid size-14 place-items-center rounded-2xl border bg-muted">
+              <ScanSearch className="size-6 text-muted-foreground" />
             </div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-600">
+            <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
               Worker agent
             </p>
-            <h2 className="mt-3 text-2xl font-medium tracking-tight">
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">
               Ready to inspect this machine
             </h2>
-            <p className="mt-3 max-w-sm text-sm leading-6 text-zinc-500">
+            <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
               Collect local capacity and network details before connecting this
               worker to the HyperCore coordinator.
             </p>
-            <p className="mt-4 max-w-sm font-mono text-[11px] leading-5 break-all text-zinc-600">
+            <p className="mt-4 max-w-sm font-mono text-xs leading-5 break-all text-muted-foreground">
               Build tools (bundled): esbuild {toolchain?.esbuild ?? "missing"} ·
               javy {toolchain?.javy ?? "missing"}
             </p>
             <Button
-              loading={loading}
+              disabled={loading}
               onClick={() => void scan()}
               className="mt-7"
             >
-              <ScanSearch className="size-4" />
+              {loading ? <Loader2 className="animate-spin" /> : <ScanSearch />}
               Scan Machine Specs
-              <ArrowRight className="size-4" />
+              <ArrowRight />
             </Button>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-zinc-600">
+              <p className="font-mono text-xs tracking-[0.2em] text-muted-foreground uppercase">
                 Step 2 of 3
               </p>
-              <h2 className="mt-2 text-xl font-medium tracking-tight">
+              <h2 className="mt-2 text-xl font-semibold tracking-tight">
                 Machine verified. Connect your coordinator.
               </h2>
             </div>
@@ -267,7 +270,7 @@ function App() {
           </div>
         )}
         {error && (
-          <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg border border-rose-900/80 bg-rose-950 px-4 py-3 text-sm text-rose-200 shadow-2xl">
+          <div className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-lg border-transparent bg-destructive px-4 py-3 text-sm font-medium text-white shadow-lg">
             <AlertCircle className="size-4" />
             {error}
           </div>

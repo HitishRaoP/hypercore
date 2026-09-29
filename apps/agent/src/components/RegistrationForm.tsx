@@ -1,8 +1,10 @@
-import { Link, Send } from "lucide-react";
+import { Button } from "@hypercore/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@hypercore/ui/components/card";
+import { Field, FieldLabel } from "@hypercore/ui/components/field";
+import { Input } from "@hypercore/ui/components/input";
+import { Loader2, Send } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { Button } from "./ui/Button";
-import { Card } from "./ui/Card";
-import { Input } from "./ui/Input";
+
 export function RegistrationForm({
   onRegister,
 }: {
@@ -20,34 +22,36 @@ export function RegistrationForm({
     }
   };
   return (
-    <Card className="p-5">
-      <div className="mb-5">
-        <h2 className="text-sm font-medium text-zinc-100">
-          Register this node
-        </h2>
-        <p className="mt-1 text-xs text-zinc-500">
+    <Card>
+      <CardHeader>
+        <CardTitle>Register this node</CardTitle>
+        <CardDescription>
           Join a coordinator to begin scheduling workloads. No API keys or
           broker credentials needed — the agent opens an outbound event
           stream to the coordinator.
-        </p>
-      </div>
-      <form onSubmit={submit} className="space-y-4">
-        <label className="block text-xs text-zinc-400">
-          <span className="mb-2 flex items-center gap-2">
-            <Link className="size-3.5" />
-            Coordinator URL
-          </span>
-          <Input
-            value={url}
-            onChange={(event) => setUrl(event.target.value)}
-            required
-          />
-        </label>
-        <Button loading={loading} className="w-full" type="submit">
-          <Send className="size-3.5" />
-          {loading ? "Negotiating handshake…" : "Register Node"}
-        </Button>
-      </form>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={submit} className="space-y-4">
+          <Field>
+            <FieldLabel htmlFor="coordinator-url">Coordinator URL</FieldLabel>
+            <Input
+              id="coordinator-url"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              required
+            />
+          </Field>
+          <Button disabled={loading} className="w-full" type="submit">
+            {loading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Send />
+            )}
+            {loading ? "Negotiating handshake…" : "Register Node"}
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   );
 }

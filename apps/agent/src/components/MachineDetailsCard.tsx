@@ -1,8 +1,11 @@
+import { Button } from "@hypercore/ui/components/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@hypercore/ui/components/card";
 import { Check, Copy, Cpu, Database, Monitor, Network } from "lucide-react";
 import { useState } from "react";
 import type { MachineInfo } from "../types";
-import { Card } from "./ui/Card";
+
 const mb = (value: number) => `${(value / 1024).toFixed(1)} GB`;
+
 export function MachineDetailsCard({ info }: { info: MachineInfo }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
@@ -33,37 +36,32 @@ export function MachineDetailsCard({ info }: { info: MachineInfo }) {
     },
   ];
   return (
-    <Card className="overflow-hidden">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
-        <div>
-          <h2 className="text-sm font-medium text-zinc-100">Machine details</h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            Native hardware probe completed
-          </p>
-        </div>
-        <button
-          onClick={copy}
-          className="flex items-center gap-2 rounded-md border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 font-mono text-[11px] text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
-        >
-          {info.machineId.slice(0, 18)}…{" "}
-          {copied ? (
-            <Check className="size-3 text-emerald-400" />
-          ) : (
-            <Copy className="size-3" />
-          )}
-        </button>
-      </div>
-      <div className="grid divide-y divide-zinc-800 md:grid-cols-2 md:divide-x md:divide-y-0">
-        {cells.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="p-5">
-            <div className="mb-2 flex items-center gap-2 text-xs text-zinc-500">
-              <Icon className="size-3.5" />
-              {label}
-            </div>
-            <p className="font-mono text-xs leading-5 text-zinc-300">{value}</p>
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle>Machine details</CardTitle>
+            <CardDescription>Native hardware probe completed</CardDescription>
           </div>
-        ))}
-      </div>
+          <Button variant="outline" size="sm" onClick={() => void copy()} className="font-mono">
+            {info.machineId.slice(0, 18)}…
+            {copied ? <Check /> : <Copy />}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {cells.map(({ icon: Icon, label, value }) => (
+            <div key={label}>
+              <p className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Icon className="size-3.5" />
+                {label}
+              </p>
+              <p className="mt-1.5 font-mono text-xs leading-5">{value}</p>
+            </div>
+          ))}
+        </div>
+      </CardContent>
     </Card>
   );
 }

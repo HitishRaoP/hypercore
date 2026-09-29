@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@hypercore/ui/lib/utils"
 import { Label as LabelPrimitive } from "radix-ui"
 
 function Label({

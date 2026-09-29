@@ -3,6 +3,7 @@
   "private": true,
   "exports": {
     "./globals.css": "./src/styles/globals.css",
+    "./styles/*": "./src/styles/*",
     "./postcss.config": "./postcss.config.mjs",
     "./lib/*": "./src/lib/*.ts",
     "./components/*": "./src/components/*.tsx",

@@ -14,6 +14,7 @@
     "postinstall": "bun ./scripts/fetch-tools.mjs --tolerant"
   },
   "dependencies": {
+    "@hypercore/ui": "*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "@tauri-apps/api": "^2",
