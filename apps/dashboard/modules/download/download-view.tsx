@@ -178,7 +178,7 @@ export const DownloadView = () => {
           <Card>
             <CardContent className="flex flex-wrap items-center gap-3 py-4">
               <span className="flex items-center gap-1.5 text-sm font-medium">
-                <CheckCircle2 className="h-4 w-4 text-[var(--ds-green-900)]" />
+                <CheckCircle2 className="h-4 w-4 text-[var(--status-success)]" />
                 Latest: {versionLabel}
               </span>
               {release.published_at && (

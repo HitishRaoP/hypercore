@@ -264,7 +264,7 @@ function App() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <Badge variant={activity.data?.online ? "default" : "secondary"}>
+          <Badge variant={activity.data?.online ? "success" : "secondary"}>
             {activity.data?.online ? "Connected" : "Idle"}
           </Badge>
         </header>

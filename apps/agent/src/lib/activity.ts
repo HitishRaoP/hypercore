@@ -30,33 +30,33 @@ export function formatLogTime(iso: string): string {
   return `${MONTHS[d.getMonth()]} ${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(Math.floor(d.getMilliseconds() / 10))}`;
 }
 
-export function invocationVariant(status: InvocationStatus): "default" | "secondary" | "destructive" {
+export function invocationVariant(status: InvocationStatus): "success" | "info" | "danger" {
   switch (status) {
     case "running":
-      return "default";
+      return "info";
     case "failed":
     case "timeout":
-      return "destructive";
+      return "danger";
     case "done":
     default:
-      return "secondary";
+      return "success";
   }
 }
 
 export function deploymentVariant(
   status: DeploymentStatus,
-): "default" | "secondary" | "destructive" | "outline" {
+): "success" | "info" | "warning" | "danger" {
   switch (status) {
-    case "building":
     case "routed":
-      return "default";
+    case "built":
+      return "success";
+    case "building":
+      return "info";
     case "failed":
-      return "destructive";
+      return "danger";
     case "uploaded":
     case "offline":
-      return "outline";
-    case "built":
     default:
-      return "secondary";
+      return "warning";
   }
 }

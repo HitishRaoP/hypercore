@@ -118,19 +118,19 @@ export const WorkerNameField = ({
           </p>
         )}
         {status === "available" && (
-          <p className="flex items-center gap-1.5 text-sm text-[var(--ds-green-900)]">
+          <p className="flex items-center gap-1.5 text-sm text-[var(--status-success)]">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Name available
           </p>
         )}
         {status === "taken" && (
-          <p className="flex items-center gap-1.5 text-sm text-[var(--ds-red-900)]">
+          <p className="flex items-center gap-1.5 text-sm text-[var(--status-danger)]">
             <XCircle className="h-3.5 w-3.5" />
             Name already taken — pick another or regenerate.
           </p>
         )}
         {status === "unknown" && (
-          <p className="text-sm text-[var(--ds-amber-900)]">
+          <p className="text-sm text-[var(--status-warning)]">
             Couldn&apos;t verify availability — the server will validate on deploy.
           </p>
         )}

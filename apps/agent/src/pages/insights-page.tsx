@@ -84,7 +84,7 @@ export function InsightsPage({
             Live runtime telemetry for this machine.
           </p>
         </div>
-        <Badge variant={online ? "default" : "secondary"}>
+        <Badge variant={online ? "success" : "secondary"}>
           {online ? "Node online" : "Node offline"}
         </Badge>
       </div>
@@ -139,7 +139,7 @@ export function InsightsPage({
                 <div key={row.label} className="flex min-w-0 items-center justify-between gap-3 py-2.5 text-sm first:pt-0 last:pb-0">
                   <dt className="shrink-0 font-mono text-sm">{row.label}</dt>
                   <dd className="min-w-0">
-                    <Badge variant={row.value ? "secondary" : "outline"} className="max-w-full">
+                    <Badge variant={row.value ? "success" : "outline"} className="max-w-full">
                       <span className="block min-w-0 max-w-full truncate" title={row.value ?? "missing"}>
                         {toolFile(row.value) ?? "missing"}
                       </span>

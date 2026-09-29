@@ -44,7 +44,7 @@ export const OsIcon = ({ osName, className }: { osName?: string; className?: str
 export const NodeSpecsLine = ({ node }: { node: MachineNode }) => {
   if (isLegacyNode(node)) {
     return (
-      <span className="text-[var(--ds-amber-900)]">
+      <span className="text-[var(--status-warning)]">
         Legacy agent — hardware details unavailable. Update the agent to report
         specs.
       </span>
@@ -92,7 +92,7 @@ export const TargetNodeSelect = ({
                 <span
                   className={cn(
                     "ml-auto h-2 w-2 shrink-0 rounded-full",
-                    selected.online ? "bg-[var(--ds-green-700)]" : "bg-[var(--ds-gray-500)]",
+                    selected.online ? "bg-[var(--status-success)]" : "bg-[var(--ds-gray-500)]",
                   )}
                 />
               </span>
@@ -121,7 +121,7 @@ export const TargetNodeSelect = ({
                       <span
                         className={cn(
                           "h-2 w-2 shrink-0 rounded-full",
-                          node.online ? "bg-[var(--ds-green-700)]" : "bg-[var(--ds-gray-500)]",
+                          node.online ? "bg-[var(--status-success)]" : "bg-[var(--ds-gray-500)]",
                         )}
                       />
                     </span>

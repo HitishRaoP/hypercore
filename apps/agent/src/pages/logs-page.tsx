@@ -120,12 +120,12 @@ export function LogsPage({
           <h2 className="text-xl font-semibold tracking-tight">Logs</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {updatedAt
-              ? `Via ${source ?? "coordinator"} · updated ${timeAgo(new Date(updatedAt).toISOString())}`
+              ? `Updated ${timeAgo(new Date(updatedAt).toISOString())}`
               : "Invocations served by this node."}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={online ? "default" : "secondary"}>
+          <Badge variant={online ? "success" : "secondary"}>
             {online ? "Node online" : "Node offline"}
           </Badge>
           <Button variant="outline" size="sm" onClick={() => onLiveChange(!live)}>

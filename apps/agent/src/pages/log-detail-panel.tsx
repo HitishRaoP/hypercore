@@ -185,20 +185,20 @@ function LogDetailContent({
           <div className="flex items-center gap-2 px-4 py-3 text-sm">
             {invocation.status === "running" ? (
               <>
-                <span className="size-1.5 animate-pulse rounded-full bg-[var(--ds-green-700)]" />
-                <span className="font-medium">Running…</span>
+                <span className="size-1.5 animate-pulse rounded-full bg-[var(--status-info)]" />
+                <span className="font-medium text-[var(--status-info)]">Running…</span>
               </>
             ) : invocation.status === "done" ? (
               <>
-                <span className="size-1.5 rounded-full bg-[var(--ds-green-700)]" />
+                <span className="size-1.5 rounded-full bg-[var(--status-success)]" />
                 <span className="font-medium">
                   Response finished in {formatDuration(invocation.durationMs)}
                 </span>
               </>
             ) : (
               <>
-                <span className="size-1.5 rounded-full bg-destructive" />
-                <span className="font-medium text-destructive">
+                <span className="size-1.5 rounded-full bg-[var(--status-danger)]" />
+                <span className="font-medium text-[var(--status-danger)]">
                   {invocation.status === "timeout" ? "Timed out" : "Failed"}
                 </span>
               </>

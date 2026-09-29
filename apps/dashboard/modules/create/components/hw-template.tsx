@@ -134,7 +134,7 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
         </div>
 
         {error && (
-          <p className="rounded-lg border border-[var(--ds-red-400)] bg-[var(--ds-red-100)] px-3 py-2 text-sm text-[var(--ds-red-900)]">
+          <p className="rounded-lg border border-[var(--status-danger-border)] bg-[var(--status-danger-bg)] px-3 py-2 text-sm text-[var(--status-danger)]">
             {error}
           </p>
         )}

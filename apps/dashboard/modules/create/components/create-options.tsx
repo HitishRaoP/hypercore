@@ -42,12 +42,12 @@ export const CreateOptions = ({ onSelect }: CreateOptionsProps) => {
       </CardHeader>
       <CardContent className="space-y-2">
         <OptionRow
-          icon={<Globe className="h-4 w-4 text-[var(--ds-green-900)]" />}
+          icon={<Globe className="h-4 w-4 text-[var(--status-success)]" />}
           label="Start with Hello World!"
           onClick={() => onSelect("template")}
         />
         <OptionRow
-          icon={<FolderOpen className="h-4 w-4 text-yellow-600" />}
+          icon={<FolderOpen className="h-4 w-4 text-[var(--status-warning)]" />}
           label="Upload your static files"
           onClick={() => onSelect("upload")}
         />
