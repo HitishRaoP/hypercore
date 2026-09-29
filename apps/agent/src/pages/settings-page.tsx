@@ -10,9 +10,9 @@ import type { RegistrationResponse, ToolchainStatus } from "../types";
 
 function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2.5 text-sm first:pt-0 last:pb-0">
+    <div className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
       <Label className="text-muted-foreground">{label}</Label>
-      <span className={mono ? "font-mono text-xs break-all" : "text-sm"}>{value}</span>
+      <span className={mono ? "font-mono break-all" : ""}>{value}</span>
     </div>
   );
 }
@@ -74,14 +74,6 @@ export function SettingsPage({
             <Row label="Heartbeat" value={`every ${registration.heartbeatIntervalSecs}s`} />
           </div>
         </div>
-        <Separator />
-        <div className="px-6 py-5">
-          <h3 className="text-sm font-medium">Build tools</h3>
-          <div className="mt-3 divide-y">
-            <Row label="esbuild" value={toolchain?.esbuild ?? "missing"} mono />
-            <Row label="javy" value={toolchain?.javy ?? "missing"} mono />
-          </div>
-        </div>
       </Card>
 
       <Card className="border-destructive/40">
@@ -98,11 +90,6 @@ export function SettingsPage({
           </Button>
         </div>
       </Card>
-
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="text-xs text-muted-foreground">Status</span>
-        <Badge variant="secondary">{registration.status}</Badge>
-      </div>
       </div>
     </div>
   );

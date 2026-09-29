@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { shortId } from "../lib/activity";
+import { Hashvatar } from "hashvatar/react";
 
 export type AgentPage = "machine" | "logs" | "deployments" | "insights" | "settings";
 
@@ -146,9 +147,12 @@ export function AppSidebar({
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="size-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
-                  </Avatar>
+                  <Hashvatar
+                         className="cursor-pointer size-10"
+                         hash={machineId}
+                         mode="dither"
+                         size={28}
+                       />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{hostname || "Worker"}</span>
                     <span className="truncate font-mono text-xs">{shortId(machineId)}</span>
