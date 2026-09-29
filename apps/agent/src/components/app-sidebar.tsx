@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@hypercore/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,7 +73,6 @@ export function AppSidebar({
   onDisconnect: () => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const initials = (hostname || "HN").slice(0, 2).toUpperCase();
   const copyId = async () => {
     try {
       await navigator.clipboard.writeText(machineId);
@@ -105,9 +103,8 @@ export function AppSidebar({
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <Boxes className="size-4" />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">HyperCore</span>
-                <span className="truncate text-xs">Worker Node</span>
+              <div className="grid flex-1 text-left">
+                <span className="truncate font-semibold text-lg">HyperCore</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@hypercore/ui/components/table";
-import { ChevronDown, Pause, Play, RefreshCw, Search } from "lucide-react";
+import { Pause, Play, RefreshCw, Search, ChevronDown } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import {
   formatDuration,
@@ -27,7 +27,13 @@ import {
   invocationVariant,
   timeAgo,
 } from "../lib/activity";
-import type { ActivityInvocation, InvocationStatus } from "../types";
+import type {
+  ActivityDeployment,
+  ActivityInvocation,
+  InvocationStatus,
+} from "../types";
+import { LogDetailPanel, LogDetailSheet } from "./log-detail-panel";
+import { useMediaQuery } from "../hooks/use-media-query";
 
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"] as const;
 const STATUSES: InvocationStatus[] = ["running", "done", "failed", "timeout"];
@@ -42,7 +48,12 @@ function hostOf(coordinatorUrl: string): string {
 
 export function LogsPage({
   invocations,
+  deployments,
   coordinatorUrl,
+  hostname,
+  machineId,
+  region,
+  nodeId,
   updatedAt,
   error,
   refreshing,
@@ -53,7 +64,12 @@ export function LogsPage({
   online,
 }: {
   invocations: ActivityInvocation[];
+  deployments: ActivityDeployment[];
   coordinatorUrl: string;
+  hostname: string;
+  machineId: string;
+  region: string;
+  nodeId: string;
   updatedAt: number | null;
   error: string;
   refreshing: boolean;
@@ -67,7 +83,8 @@ export function LogsPage({
   const [method, setMethod] = useState("all");
   const [status, setStatus] = useState("all");
   const [failedOnly, setFailedOnly] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const wide = useMediaQuery("(min-width: 1280px)");
   const host = hostOf(coordinatorUrl);
 
   const filtered = useMemo(() => {
@@ -81,6 +98,20 @@ export function LogsPage({
       return hay.includes(q);
     });
   }, [invocations, query, method, status, failedOnly]);
+
+  const selectedIndex = selectedId
+    ? filtered.findIndex((inv) => inv.invocationId === selectedId)
+    : -1;
+  const selected = selectedIndex >= 0 ? filtered[selectedIndex] : undefined;
+  const selectedDeployment = selected
+    ? deployments.find((d) => d.deploymentId === selected.deploymentId)
+    : undefined;
+
+  const step = (delta: 1 | -1) => {
+    if (selectedIndex < 0) return;
+    const next = filtered[selectedIndex + delta];
+    if (next) setSelectedId(next.invocationId);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
@@ -160,94 +191,131 @@ export function LogsPage({
           </div>
         </Card>
       ) : (
-        <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden py-0">
-          <div className="scroll-thin table-scroll min-h-0 flex-1 overflow-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow>
-                <TableHead className="pl-6">Time</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Host</TableHead>
-                <TableHead>Request</TableHead>
-                <TableHead className="pr-6">Message</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="px-6 py-8 text-center text-sm text-muted-foreground">
-                    {invocations.length === 0
-                      ? "No logs yet — hit your function URL to see one land here."
-                      : "No logs match the current filters."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((inv) => {
-                  const detail = inv.error ?? inv.stdoutPreview;
-                  const open = openId === inv.invocationId;
-                  return (
-                    <Fragment key={inv.invocationId}>
-                      <TableRow
-                        className={detail ? "cursor-pointer" : undefined}
-                        onClick={() => detail && setOpenId(open ? null : inv.invocationId)}
-                      >
-                        <TableCell className="pl-6 font-mono text-xs whitespace-nowrap text-muted-foreground">
-                          {formatLogTime(inv.startedAt)}
-                        </TableCell>
-                        <TableCell>
-                          <span className="flex items-center gap-1.5">
-                            <Badge variant="outline" className="font-mono">
-                              {inv.method}
-                            </Badge>
-                            <Badge variant={invocationVariant(inv.status)}>
-                              {inv.status === "running" ? "Running" : inv.status}
-                            </Badge>
-                          </span>
-                        </TableCell>
-                        <TableCell className="max-w-40 truncate text-xs text-muted-foreground">
-                          {host}
-                        </TableCell>
-                        <TableCell className="max-w-56 truncate font-mono text-xs">
-                          {inv.path}
-                        </TableCell>
-                        <TableCell className="max-w-72 truncate pr-6 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <span className="truncate">{detail ?? "—"}</span>
-                            {detail && (
-                              <ChevronDown className={`size-3.5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-                            )}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                      {open && detail && (
-                        <TableRow className="bg-muted/40 hover:bg-muted/40">
-                          <TableCell colSpan={5} className="px-6 py-3 whitespace-normal">
-                            <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-muted-foreground">
-                              <span>worker {inv.workerName}</span>
-                              <span>duration {formatDuration(inv.durationMs)}</span>
-                              {inv.exitCode !== null && inv.exitCode !== undefined && (
-                                <span>exit {inv.exitCode}</span>
+        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+          <Card className="flex min-h-0 min-w-0 flex-1 flex-col gap-0 overflow-hidden py-0">
+            <div className="scroll-thin table-scroll min-h-0 flex-1 overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 z-10 bg-card">
+                  <TableRow>
+                    <TableHead className="pl-6">Time</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Host</TableHead>
+                    <TableHead>Request</TableHead>
+                    <TableHead className="pr-6">Message</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="px-6 py-8 text-center text-sm text-muted-foreground">
+                        {invocations.length === 0
+                          ? "No logs yet — hit your function URL to see one land here."
+                          : "No logs match the current filters."}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filtered.map((inv) => {
+                      const detail = inv.error ?? inv.stdoutPreview;
+                      const isSelected = inv.invocationId === selectedId;
+                      return (
+                        <Fragment key={inv.invocationId}>
+                        <TableRow
+                          data-state={isSelected ? "selected" : undefined}
+                          onClick={() => setSelectedId(isSelected ? null : inv.invocationId)}
+                          className="cursor-pointer"
+                        >
+                          <TableCell className="pl-6 font-mono text-xs whitespace-nowrap text-muted-foreground">
+                            {formatLogTime(inv.startedAt)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="flex items-center gap-1.5">
+                              <Badge variant="outline" className="font-mono">
+                                {inv.method}
+                              </Badge>
+                              <Badge variant={invocationVariant(inv.status)}>
+                                {inv.status === "running" ? "Running" : inv.status}
+                              </Badge>
+                            </span>
+                          </TableCell>
+                          <TableCell className="max-w-40 truncate text-xs text-muted-foreground">
+                            {host}
+                          </TableCell>
+                          <TableCell className="max-w-56 truncate font-mono text-xs">
+                            {inv.path}
+                          </TableCell>
+                          <TableCell className="max-w-72 truncate pr-6 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <span className="truncate">{detail ?? "—"}</span>
+                              {detail && (
+                                <ChevronDown className={`size-3.5 shrink-0 transition-transform ${isSelected ? "rotate-180" : ""}`} />
                               )}
-                            </div>
-                            <pre className="mt-2 overflow-x-auto rounded-md border bg-background px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
-                              {detail}
-                            </pre>
+                            </span>
                           </TableCell>
                         </TableRow>
-                      )}
-                    </Fragment>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-          </div>
-          <div className="shrink-0 border-t bg-muted/40 px-6 py-3">
-            <p className="font-mono text-xs text-muted-foreground uppercase">
-              {filtered.length} of {invocations.length} logs
-            </p>
-          </div>
-        </Card>
+                        {isSelected && detail && (
+                          <TableRow className="bg-muted/40 hover:bg-muted/40">
+                            <TableCell colSpan={5} className="px-6 py-3 whitespace-normal">
+                              <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-xs text-muted-foreground">
+                                <span>worker {inv.workerName}</span>
+                                <span>duration {formatDuration(inv.durationMs)}</span>
+                                {inv.exitCode !== null && inv.exitCode !== undefined && (
+                                  <span>exit {inv.exitCode}</span>
+                                )}
+                              </div>
+                              <pre className="mt-2 overflow-x-auto rounded-md border bg-background px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
+                                {detail}
+                              </pre>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        </Fragment>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="shrink-0 border-t bg-muted/40 px-6 py-3">
+              <p className="font-mono text-xs text-muted-foreground uppercase">
+                {filtered.length} of {invocations.length} logs
+              </p>
+            </div>
+          </Card>
+
+          {selected && wide && (
+            <LogDetailPanel
+              invocation={selected}
+              deployment={selectedDeployment}
+              host={host}
+              hostname={hostname}
+              machineId={machineId}
+              region={region}
+              nodeId={nodeId}
+              onClose={() => setSelectedId(null)}
+              onPrev={() => step(-1)}
+              onNext={() => step(1)}
+              hasPrev={selectedIndex > 0}
+              hasNext={selectedIndex < filtered.length - 1}
+            />
+          )}
+        </div>
+      )}
+      {selected && !wide && (
+        <LogDetailSheet
+          open
+          invocation={selected}
+          deployment={selectedDeployment}
+          host={host}
+          hostname={hostname}
+          machineId={machineId}
+          region={region}
+          nodeId={nodeId}
+          onClose={() => setSelectedId(null)}
+          onPrev={() => step(-1)}
+          onNext={() => step(1)}
+          hasPrev={selectedIndex > 0}
+          hasNext={selectedIndex < filtered.length - 1}
+        />
       )}
     </div>
   );

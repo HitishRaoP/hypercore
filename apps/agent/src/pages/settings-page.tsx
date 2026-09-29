@@ -1,4 +1,3 @@
-import { Badge } from "@hypercore/ui/components/badge";
 import { Button } from "@hypercore/ui/components/button";
 import { Card } from "@hypercore/ui/components/card";
 import { Input } from "@hypercore/ui/components/input";
@@ -6,7 +5,7 @@ import { Label } from "@hypercore/ui/components/label";
 import { Separator } from "@hypercore/ui/components/separator";
 import { Check, Copy, LogOut } from "lucide-react";
 import { useState } from "react";
-import type { RegistrationResponse, ToolchainStatus } from "../types";
+import type { RegistrationResponse } from "../types";
 
 function Row({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
@@ -21,13 +20,11 @@ export function SettingsPage({
   registration,
   coordinatorUrl,
   machineId,
-  toolchain,
   onUnregister,
 }: {
   registration: RegistrationResponse;
   coordinatorUrl: string;
   machineId: string;
-  toolchain: ToolchainStatus | null;
   onUnregister: () => void;
 }) {
   const [copied, setCopied] = useState(false);

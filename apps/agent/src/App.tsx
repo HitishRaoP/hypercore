@@ -243,10 +243,8 @@ function App() {
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
             <Breadcrumb>
               <BreadcrumbList>
-                <BreadcrumbItem>HyperCore</BreadcrumbItem>
                 <BreadcrumbItem>
                   <BreadcrumbPage>{AGENT_PAGE_TITLES[page]}</BreadcrumbPage>
                 </BreadcrumbItem>
@@ -268,7 +266,12 @@ function App() {
           {page === "logs" && (
             <LogsPage
               invocations={activity.data?.invocations ?? []}
+              deployments={activity.data?.deployments ?? []}
               coordinatorUrl={coordinatorUrl}
+              hostname={info?.hostname ?? "Worker"}
+              machineId={machineId}
+              region={registration.assignedRegion}
+              nodeId={registration.nodeId}
               updatedAt={activity.updatedAt}
               error={activity.error}
               refreshing={activity.refreshing}
@@ -301,7 +304,6 @@ function App() {
               registration={registration}
               coordinatorUrl={coordinatorUrl}
               machineId={machineId}
-              toolchain={toolchain}
               onUnregister={() => void unregister()}
             />
           )}
