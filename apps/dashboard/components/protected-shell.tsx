@@ -25,14 +25,15 @@ const TITLES: Record<string, string> = {
 
 export function ProtectedShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const title =
-    Object.entries(TITLES).find(([href]) => pathname.startsWith(href))?.[1] ??
-    "Console";
+  const title = pathname.startsWith("/deployments/")
+    ? "Deployment Details"
+    : (Object.entries(TITLES).find(([href]) => pathname.startsWith(href))?.[1] ??
+      "Console");
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh overflow-hidden">
       <DashboardSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-h-0 overflow-hidden">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <Breadcrumb>
@@ -43,7 +44,7 @@ export function ProtectedShell({ children }: { children: ReactNode }) {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <div className="flex min-h-0 flex-1 flex-col p-4 md:p-6">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4 md:p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

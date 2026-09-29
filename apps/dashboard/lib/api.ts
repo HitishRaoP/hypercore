@@ -20,13 +20,23 @@ export interface MachineNode {
   online: boolean;
 }
 
+export interface DeploymentFile {
+  name: string;
+  key: string;
+  size: number;
+  contentType?: string;
+}
+
 export interface Deployment {
   deploymentId: string;
   workerName: string;
   machineId: string;
   entrypoint: string;
   status: string;
+  files?: DeploymentFile[] | null;
+  artifactKey?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface Invocation {
