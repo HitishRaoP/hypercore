@@ -19,6 +19,7 @@ import {
   type MachineNode,
 } from "../lib/deploy";
 import { env } from "@/lib/env";
+import { CodeEditor } from "./code-editor";
 import { DeploySuccess } from "./deploy-success";
 import { TargetNodeSelect } from "./target-node-select";
 import { WorkerNameField, type WorkerNameStatus } from "./worker-name-field";
@@ -36,6 +37,7 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DeployResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [indexTs, setIndexTs] = useState(HELLO_WORLD_INDEX_TS);
 
   const refreshNodes = async () => {
     setLoadingNodes(true);
@@ -58,11 +60,13 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
     setError(null);
     try {
       if (!machineId.trim()) throw new Error("Pick a target node.");
+      if (!indexTs.trim()) throw new Error("index.ts is empty.");
       const formData = new FormData();
       formData.append("workerName", workerName.trim() || "hello-world");
       formData.append("machineId", machineId.trim());
       formData.append("entrypoint", "index.ts");
-      for (const file of helloWorldFiles()) formData.append("files", file, file.name);
+      for (const file of helloWorldFiles(indexTs))
+        formData.append("files", file, file.name);
       const res = await axios.post(`${env.API_URL}/code-upload`, formData, {
         withCredentials: true
       });
@@ -127,12 +131,25 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-[16px] font-medium">Bundle contents</label>
-          <div className="overflow-hidden rounded-xl border border-[var(--ds-gray-400)] bg-[var(--ds-gray-100)] p-5">
-            <pre className="overflow-x-auto whitespace-pre font-mono text-sm leading-6">
-              <code>{HELLO_WORLD_INDEX_TS}</code>
-            </pre>
+          <div className="flex items-center justify-between">
+            <label className="text-[16px] font-medium">
+              index.ts
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-sm"
+              onClick={() => setIndexTs(HELLO_WORLD_INDEX_TS)}
+            >
+              Reset
+            </Button>
           </div>
+          <CodeEditor value={indexTs} onChange={setIndexTs} />
+          <p className="text-xs text-muted-foreground">
+            Edit the handler, then hit Deploy. package.json and bun.lock are
+            included automatically.
+          </p>
         </div>
 
         {error && (

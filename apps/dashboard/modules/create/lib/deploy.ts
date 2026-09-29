@@ -42,9 +42,13 @@ export const HELLO_WORLD_BUN_LOCK = `{
 }
 `;
 
-export function helloWorldFiles(): File[] {
+export function helloWorldFiles(indexTsContent?: string): File[] {
+  const indexTs =
+    typeof indexTsContent === "string" && indexTsContent.length > 0
+      ? indexTsContent
+      : HELLO_WORLD_INDEX_TS;
   return [
-    new File([HELLO_WORLD_INDEX_TS], "index.ts", { type: "text/typescript" }),
+    new File([indexTs], "index.ts", { type: "text/typescript" }),
     new File([HELLO_WORLD_PACKAGE_JSON], "package.json", {
       type: "application/json",
     }),
