@@ -641,7 +641,7 @@ export function DeploymentDetailsContent({
                       <StatusDot status={inv.status === "done" ? "built" : inv.status} />
                       <span className="font-mono text-[13px] font-medium">{inv.method}</span>
                       <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-muted-foreground">
-                        {inv.path}
+                        {inv.workerName}
                       </span>
                       <span className="shrink-0 font-mono text-xs text-muted-foreground">
                         {formatDuration(inv.durationMs)}

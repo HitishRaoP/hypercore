@@ -79,7 +79,7 @@ function LogDetailContent({
 
   const copySummary = async () => {
     const summary = [
-      `${invocation.method} ${invocation.path} — ${invocation.status}`,
+      `${invocation.method} — ${invocation.status}`,
       `Time: ${invocation.startedAt}`,
       `Request ID: ${invocation.invocationId}`,
       `Host: ${host}`,
@@ -107,9 +107,7 @@ function LogDetailContent({
         <Badge variant="outline" className="shrink-0 font-mono">
           {invocation.method}
         </Badge>
-        <span className="min-w-0 flex-1 truncate font-mono text-sm font-medium">
-          {invocation.path}
-        </span>
+        <span className="min-w-0 flex-1" />
         <Badge variant={invocationVariant(invocation.status)} className="shrink-0">
           {invocation.status === "running" ? "Running" : invocation.status}
         </Badge>
@@ -141,9 +139,6 @@ function LogDetailContent({
             <KV label="Request ID" mono>
               {shortId(invocation.invocationId)}
             </KV>
-            <KV label="Path" mono>
-              {invocation.path}
-            </KV>
             <KV label="Host" mono>
               {host}
             </KV>
@@ -166,9 +161,6 @@ function LogDetailContent({
             Function Invocation
           </div>
           <div className="divide-y px-4 py-3">
-            <KV label="Route" mono>
-              {invocation.path}
-            </KV>
             <KV label="Execution Duration" mono>
               {formatDuration(invocation.durationMs)}
             </KV>

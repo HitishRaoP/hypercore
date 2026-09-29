@@ -93,7 +93,7 @@ export function LogsPage({
       if (status !== "all" && inv.status !== status) return false;
       if (failedOnly && inv.status !== "failed" && inv.status !== "timeout") return false;
       if (!q) return true;
-      const hay = `${inv.path} ${inv.workerName} ${inv.method} ${inv.stdoutPreview ?? ""} ${inv.error ?? ""}`.toLowerCase();
+      const hay = `${inv.workerName} ${inv.method} ${inv.stdoutPreview ?? ""} ${inv.error ?? ""}`.toLowerCase();
       return hay.includes(q);
     });
   }, [invocations, query, method, status, failedOnly]);
@@ -199,14 +199,13 @@ export function LogsPage({
                     <TableHead className="pl-6">Time</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Host</TableHead>
-                    <TableHead>Request</TableHead>
                     <TableHead className="pr-6">Message</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="px-6 py-8 text-center text-sm text-muted-foreground">
+                      <TableCell colSpan={4} className="px-6 py-8 text-center text-sm text-muted-foreground">
                         {invocations.length === 0
                           ? "No logs yet — hit your function URL to see one land here."
                           : "No logs match the current filters."}
@@ -239,9 +238,6 @@ export function LogsPage({
                           <TableCell className="max-w-40 truncate text-sm text-muted-foreground">
                             {host}
                           </TableCell>
-                          <TableCell className="max-w-56 truncate font-mono text-sm">
-                            {inv.path}
-                          </TableCell>
                           <TableCell className="max-w-72 truncate pr-6 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <span className="truncate">{detail ?? "—"}</span>
@@ -253,7 +249,7 @@ export function LogsPage({
                         </TableRow>
                         {isSelected && detail && (
                           <TableRow className="bg-muted/40 hover:bg-muted/40">
-                            <TableCell colSpan={5} className="px-6 py-3 whitespace-normal">
+                            <TableCell colSpan={4} className="px-6 py-3 whitespace-normal">
                               <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-sm text-muted-foreground">
                                 <span>worker {inv.workerName}</span>
                                 <span>duration {formatDuration(inv.durationMs)}</span>
