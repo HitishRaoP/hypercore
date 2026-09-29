@@ -6,6 +6,7 @@ import deploymentRouter from "./routers/deployment.router";
 import agentsRouter from "./routers/agents.router";
 import activityRouter from "./routers/activity.router";
 import invocationsRouter from "./routers/invocations.router";
+import nodesRouter from "./routers/nodes.router";
 import { invokeRouter, workerRouter } from "./routers/invoke.router";
 
 const app = express();
@@ -28,6 +29,9 @@ app.use("/deployment", deploymentRouter);
 app.use("/agents", agentsRouter);
 
 app.use("/activity", activityRouter);
+
+// Versioned node registry — the agent POSTs { machine } here on register.
+app.use("/api/v1/nodes", nodesRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hypercore api is up!" });
