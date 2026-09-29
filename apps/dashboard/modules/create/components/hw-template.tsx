@@ -14,6 +14,8 @@ import {
 import {
   HELLO_WORLD_INDEX_TS,
   fetchNodes,
+  generateAvailableWorkerSlug,
+  generateWorkerSlug,
   helloWorldFiles,
   type DeployResultData,
   type MachineNode,
@@ -29,7 +31,8 @@ interface HWTemplateProps {
 }
 
 export const HWTemplate = ({ onBack }: HWTemplateProps) => {
-  const [workerName, setWorkerName] = useState("long-poetry-3588");
+  // Fresh slug on every mount, so re-entering the page never reuses a name.
+  const [workerName, setWorkerName] = useState(generateWorkerSlug);
   const [nameStatus, setNameStatus] = useState<WorkerNameStatus>("idle");
   const [machineId, setMachineId] = useState("");
   const [nodes, setNodes] = useState<MachineNode[]>([]);
@@ -93,12 +96,18 @@ export const HWTemplate = ({ onBack }: HWTemplateProps) => {
     }
   };
 
+  // A deployed name is now taken, so the next attempt starts from a fresh slug.
+  const startOver = async () => {
+    setResult(null);
+    setWorkerName(await generateAvailableWorkerSlug());
+  };
+
   if (result) {
     return (
       <DeploySuccess
         result={result}
         onBack={onBack}
-        onReset={() => setResult(null)}
+        onReset={() => void startOver()}
       />
     );
   }

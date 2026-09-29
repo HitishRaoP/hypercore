@@ -108,6 +108,22 @@ export function generateWorkerSlug(): string {
 }
 
 /**
+ * Generates a slug and retries until the API reports it as free. Falls back to
+ * the first random slug when availability can't be verified.
+ */
+export async function generateAvailableWorkerSlug(
+  attempts = 8,
+): Promise<string> {
+  let slug = generateWorkerSlug();
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const taken = await checkWorkerNameTaken(slug);
+    if (taken !== true) return slug;
+    slug = generateWorkerSlug();
+  }
+  return slug;
+}
+
+/**
  * True when the name is already taken, false when free, null when the
  * API couldn't be reached (deploy will still validate server-side).
  */

@@ -8,7 +8,7 @@ import { Input } from "@hypercore/ui/components/input";
 import { cn } from "@hypercore/ui/lib/utils";
 import {
   checkWorkerNameTaken,
-  generateWorkerSlug,
+  generateAvailableWorkerSlug,
 } from "../lib/deploy";
 import { env } from "@/lib/env";
 
@@ -61,13 +61,7 @@ export const WorkerNameField = ({
   const regenerate = async () => {
     setGenerating(true);
     try {
-      let slug = generateWorkerSlug();
-      for (let attempt = 0; attempt < 8; attempt++) {
-        const taken = await checkWorkerNameTaken(slug);
-        if (taken !== true) break;
-        slug = generateWorkerSlug();
-      }
-      onChange(slug);
+      onChange(await generateAvailableWorkerSlug());
     } finally {
       setGenerating(false);
     }

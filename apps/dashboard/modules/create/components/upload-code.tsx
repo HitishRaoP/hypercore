@@ -20,6 +20,8 @@ import {
 } from "@hypercore/ui/components/field";
 import {
   fetchNodes,
+  generateAvailableWorkerSlug,
+  generateWorkerSlug,
   type DeployResultData,
   type MachineNode,
 } from "../lib/deploy";
@@ -55,9 +57,12 @@ export function UploadCode({ onBack }: UploadCodeProps) {
     void refreshNodes();
   }, []);
 
+  // Generated once per mount, so the form never opens on a stale slug.
+  const [initialWorkerName] = useState(generateWorkerSlug);
+
   const form = useForm({
     defaultValues: {
-      workerName: "hello-world",
+      workerName: initialWorkerName,
       machineId: "",
       entrypoint: "index.ts",
       files: [] as File[],
@@ -95,7 +100,14 @@ export function UploadCode({ onBack }: UploadCodeProps) {
             workerUrl: res.data.workerUrl,
           },
         });
-        form.reset();
+        // Passing values also rebases the defaults, so the next deploy starts
+        // from a fresh slug instead of reusing the one we just consumed.
+        form.reset({
+          workerName: await generateAvailableWorkerSlug(),
+          machineId: "",
+          entrypoint: "index.ts",
+          files: [],
+        });
       } catch (error) {
         const message =
           axios.isAxiosError(error)
