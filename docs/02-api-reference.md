@@ -528,6 +528,8 @@ the path, because the dashboard's activity link is a plain URL.
 ### 4.4 `routers/nodes.router.ts`
 
 ```ts
+router.use(express.json());
+
 router.post("/register", registerNode);
 router.get("/", listNodes);
 router.get("/:machineId", getNode);
@@ -535,6 +537,13 @@ router.get("/:machineId", getNode);
 
 The node registry. `register` is declared first only for readability — the
 methods differ, so there is no ambiguity with `/:machineId`.
+
+The router installs its own `express.json()` because the global parser in
+`app.ts` is mounted *after* `/api/v1/nodes` (the raw-body invoke routes and
+`better-auth` must stay before it). Without this line `req.body` is
+`undefined`, `POST /register` always answers `400 Invalid machine payload`
+with an empty field list, and the agent still opens its SSE stream — so the
+API logs `agent connected:` while no `machines` row is ever written.
 
 ### 4.5 `routers/invocations.router.ts`
 
@@ -1845,6 +1854,7 @@ app.get("/", (req, res) => { res.json({ message: "Hypercore api is up!" }); });
 |----------|-----|
 | `/invoke` and `/w` first | Their bodies must stay raw bytes. They install `express.raw()` themselves. If `express.json()` ran first, a request body would be parsed into an object and the function would lose its standard input |
 | `/invocations` before the JSON parser | It installs its own `express.json({limit:"10mb"})` for base64 results. Mounting it here means that limit applies to results without loosening the global one |
+| `/api/v1/nodes` before the JSON parser | It installs its own `express.json()` (see 4.4). The global parser cannot move above `/invoke`/`/w`/auth, so the router parses its own `POST /register` body |
 | `/api/auth/{*any}` | better-auth handles sign-in, sign-up, sessions and passkeys. The `{*any}` wildcard matches every path after the prefix |
 | `express.json()` here | Everything below it may assume a JSON body |
 | `/code-upload` and `/deployment` last | They use multipart uploads, so a JSON parser does nothing for them and the routers install their own multer middleware |
@@ -1896,7 +1906,7 @@ Find anything fast.
 | `invoke.router.ts` | 16 | Two routers, one raw parser, 4 routes |
 | `agents.router.ts` | 10 | 3 routes |
 | `activity.router.ts` | 8 | 1 route |
-| `nodes.router.ts` | 10 | 3 routes |
+| `nodes.router.ts` | 16 | 3 routes, its own `express.json()` (global parser mounts later) |
 | `invocations.router.ts` | 19 | 2 routes, a 10 MB JSON limit |
 | `code-upload.router.ts` | 30 | 5 routes, upload limits, route ordering |
 | `deployment.router.ts` | 20 | 4 routes, a 25 MB limit |

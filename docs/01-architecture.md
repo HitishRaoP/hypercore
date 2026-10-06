@@ -195,6 +195,13 @@ The invocations router — which receives the agent's *result* — is mounted
 before the JSON parser too, but it installs its own larger `express.json({limit:
 "10mb"})`, because results travel as base64 text and get big.
 
+The nodes router (`POST /api/v1/nodes/register`) is in the same position for
+a different reason: the global parser cannot move above `/invoke`, `/w` or
+`better-auth`, so `nodes.router.ts` installs its own plain `express.json()`.
+Without it `req.body` is `undefined`, registration always `400`s with an
+empty field list, and the agent still opens its SSE stream — the log shows
+`agent connected:` while no `machines` row is written.
+
 ### 3.2 Literal paths are declared before parameterised paths
 
 In `code-upload.router.ts`:
@@ -589,6 +596,10 @@ A list of every notable decision, what it buys, and what it costs.
 
 **The router order in `app.ts` is load-bearing.** Moving `express.json()`
 above `/invoke` silently breaks stdin forwarding. Section 3 explains why.
+Routers mounted before the global parser (`invocations`, `nodes`) must
+install their own body parser — removing `router.use(express.json())` from
+either one silently breaks its POST endpoints while its GET/SSE endpoints
+keep working.
 
 **`/invoke` and `/w` must be the only raw-body routes.** Any new route that
 forwards a body to user code must mount before `express.json()` and install

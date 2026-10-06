@@ -95,6 +95,7 @@ PERSON              RUST (lib.rs)                API                     POSTGRE
 | "A coordinator URL is required." | Empty field | The form |
 | "That coordinator URL does not look valid." | Not a URL. Usually a missing `https://` | The form |
 | `400 Invalid machine payload: …` | The agent and API disagree on the shape | Compare Rust `MachineInfo` with `machinePayloadSchema` |
+| `400 Invalid machine payload:` (empty field list) + `agent connected:` in API log, but no row in `machines` | `req.body` was `undefined` — the nodes router lost its `express.json()` (the global parser mounts after `/api/v1/nodes`) | Restore `router.use(express.json())` in `nodes.router.ts`; then re-register the agent |
 | The UI completes but no work ever arrives | The stream failed after the stub response | Look for `SSE connect failed` in the agent console |
 | The node appears twice in the dashboard | `machine_uid` changed, so a new `machine_id` was generated | Check `~/.HyperCore/machine_id` |
 | The registration succeeds but `/agents/online` is empty | The stream is not open | Check the API log for `agent connected:` |
