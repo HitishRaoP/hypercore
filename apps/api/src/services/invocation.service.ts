@@ -24,10 +24,6 @@ import { pushEvent, listOnlineAgents } from "../lib/scheduler";
  *   with the process; the DB row keeps status=running in that case.
  */
 
-// ---------------------------------------------------------------------------
-// Public types
-// ---------------------------------------------------------------------------
-
 export type InvocationStatus = "running" | "done" | "failed" | "timeout";
 
 /** What the agent POSTs back after executing the wasm. */

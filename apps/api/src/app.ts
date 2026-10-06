@@ -81,10 +81,8 @@ app.use(cors({
   credentials: !allowAnyOrigin,
 }));
 
-// Serving Plane mounts BEFORE express.json(): invoke bodies stay raw bytes
-// (function stdin) instead of being JSON-parsed. The agent result callback
-// carries its own 10mb JSON parser (stdout travels base64).
 app.use("/invoke", invokeRouter);
+
 app.use("/w", workerRouter);
 
 app.use("/invocations", invocationsRouter);

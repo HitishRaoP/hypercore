@@ -2,16 +2,6 @@ import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { HttpError } from "../lib/errors";
 import { R2_BUCKET, S3, rawKeyFor } from "../lib/s3";
 
-/**
- * Code-upload flow: validate the multipart bundle, store raw sources in R2
- * (raw/{deploymentId}/{file}), and serve them back to agents via the R2
- * proxy. Deployment/table writes live in deployment.service.
- */
-
-// ---------------------------------------------------------------------------
-// Template (single source of truth for the dashboard template + curl users)
-// ---------------------------------------------------------------------------
-
 export const HELLO_WORLD = {
   entrypoint: "index.ts",
   files: [
@@ -30,10 +20,6 @@ export const HELLO_WORLD = {
   ],
 };
 
-// ---------------------------------------------------------------------------
-// Validation
-// ---------------------------------------------------------------------------
-
 const ALLOWED_RE = /^(index|function|worker)\.ts$|^package\.json$|^bun\.lockb?$|^.+\.ts$/i;
 
 export function sanitizeFileName(name: string): string {
@@ -44,7 +30,6 @@ export function sanitizeFileName(name: string): string {
     .replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
-/** Validates the bundle fields; returns the sanitized file names. */
 export function validateUploadInput(
   workerName: string,
   machineId: string,
@@ -71,7 +56,6 @@ export function validateUploadInput(
   return names;
 }
 
-/** Picks the entrypoint file, falling back to the first .ts file. */
 export function resolveEntrypoint(names: string[], requested: string): string {
   const clean = sanitizeFileName(requested || "index.ts");
   if (names.includes(clean)) return clean;
@@ -79,10 +63,6 @@ export function resolveEntrypoint(names: string[], requested: string): string {
   if (!fallback) throw new HttpError(400, "A .ts function file (e.g. index.ts) is required");
   return fallback;
 }
-
-// ---------------------------------------------------------------------------
-// R2 raw storage
-// ---------------------------------------------------------------------------
 
 export interface RawStoredFile {
   name: string;
@@ -113,10 +93,6 @@ export async function storeRawFiles(
   }
   return stored;
 }
-
-// ---------------------------------------------------------------------------
-// R2 proxy (agents hold no R2 credentials)
-// ---------------------------------------------------------------------------
 
 export function assertReadableKey(key: string): void {
   if (!key || (!key.startsWith("raw/") && !key.startsWith("artifacts/"))) {

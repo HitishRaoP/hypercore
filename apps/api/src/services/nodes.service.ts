@@ -17,10 +17,6 @@ import { isAgentOnline } from "../lib/scheduler";
  * All row types are inferred from the table — nothing is mirrored by hand.
  */
 
-// ---------------------------------------------------------------------------
-// Input (agent payload shape; validated, then mapped to NewMachineRow)
-// ---------------------------------------------------------------------------
-
 const machinePayloadSchema = z.object({
   machineId: z.string().min(1),
   hostname: z.string(),
@@ -37,10 +33,6 @@ const machinePayloadSchema = z.object({
   availableDiskMb: z.number().int().nonnegative(),
   localIp: z.string(),
 });
-
-// ---------------------------------------------------------------------------
-// DTOs (mapped 1:1 from MachineRow; Dates become ISO strings)
-// ---------------------------------------------------------------------------
 
 export interface MachineDto {
   machineId: MachineRow["machineId"];
@@ -62,7 +54,6 @@ export interface MachineDto {
   online: boolean;
 }
 
-/** What the agent parses as RegistrationResponse (camelCase). */
 export interface RegistrationResult {
   status: "success";
   nodeId: string;
@@ -71,11 +62,6 @@ export interface RegistrationResult {
   heartbeatIntervalSecs: number;
 }
 
-// ---------------------------------------------------------------------------
-// Queries
-// ---------------------------------------------------------------------------
-
-/** Registers (upserts) a node and returns the agent's registration payload. */
 export async function registerMachine(payload: unknown): Promise<RegistrationResult> {
   const parsed = machinePayloadSchema.safeParse(payload);
   if (!parsed.success) {
@@ -127,10 +113,6 @@ export async function getMachineById(machineId: string): Promise<MachineRow | un
 export async function listMachines(): Promise<MachineRow[]> {
   return db.select().from(machines).orderBy(desc(machines.lastSeenAt));
 }
-
-// ---------------------------------------------------------------------------
-// Mapping
-// ---------------------------------------------------------------------------
 
 export function toMachineDto(row: MachineRow): MachineDto {
   return {

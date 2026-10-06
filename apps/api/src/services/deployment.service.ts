@@ -119,7 +119,6 @@ export async function listDeploymentsByMachine(
     .limit(safeLimit);
 }
 
-/** Deployments owned by one user, newest first. */
 export async function listDeploymentsByUser(
   userId: string,
   limit: number,
