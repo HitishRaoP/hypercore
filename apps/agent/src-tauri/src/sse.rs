@@ -53,6 +53,13 @@ pub struct InvokeRequest {
     pub body_b64: Option<String>,
     #[serde(default = "default_invoke_timeout")]
     pub timeout_ms: u64,
+    /// Set when the coordinator reroutes a request whose owner node is
+    /// offline. `machine_id` is the fallback target (this node);
+    /// `owner_machine_id` is the original deployment owner for logging.
+    #[serde(default)]
+    pub fallback: bool,
+    #[serde(default)]
+    pub owner_machine_id: Option<String>,
 }
 
 fn default_invoke_timeout() -> u64 {
@@ -346,6 +353,24 @@ async fn run_deployment(
     let receipt = upload_artifact(client, config, request, &worker_wasm).await?;
     println!("  wasm uploaded via server: {receipt}");
 
+    // Compile synchronously BEFORE ack: the deploy already blocks this loop
+    // for the esbuild/javy build, so warming here guarantees every later
+    // invoke hits the cache. Background warming raced on-demand compiles
+    // for the same bytes and made both slower — never do that.
+    {
+        let wasm_path = worker_wasm.clone();
+        if let Err(error) = tokio::task::spawn_blocking(move || {
+            match std::fs::read(&wasm_path) {
+                Ok(bytes) => crate::executor::precache(bytes),
+                Err(error) => eprintln!("cache warm read failed: {error}"),
+            }
+        })
+        .await
+        {
+            eprintln!("cache warm task failed: {error}");
+        }
+    }
+
     Ok(format!("deployed {} -> wasm", entry_disk.display()))
 }
 
@@ -361,6 +386,7 @@ struct InvokeOutcome {
 /// Run one URL-hit invocation locally (wasmtime) and report the result back
 /// to the coordinator, which relays it to the waiting HTTP response.
 async fn handle_invoke(client: reqwest::Client, config: SseConfig, request: InvokeRequest) {
+    let started = std::time::Instant::now();
     println!(
         "invoke {}: {} {} (deployment {})",
         request.invocation_id, request.method, request.path, request.deployment_id
@@ -382,10 +408,20 @@ async fn handle_invoke(client: reqwest::Client, config: SseConfig, request: Invo
     });
     match client.post(&url).json(&body).send().await {
         Ok(response) if response.status().is_success() => {
-            println!("invoke {} reported: ok={}", request.invocation_id, outcome.ok);
+            println!(
+                "invoke {} reported: ok={} in {}ms",
+                request.invocation_id,
+                outcome.ok,
+                started.elapsed().as_millis()
+            );
         }
         Ok(response) => {
-            eprintln!("invoke {} result rejected: {}", request.invocation_id, response.status());
+            eprintln!(
+                "invoke {} result rejected: {} after {}ms",
+                request.invocation_id,
+                response.status(),
+                started.elapsed().as_millis()
+            );
         }
         Err(error) => {
             eprintln!("invoke {} result post failed: {error}", request.invocation_id);
@@ -407,7 +443,19 @@ async fn run_invocation(
         timed_out: false,
     };
     if request.machine_id != config.machine_id {
-        return fail(format!("belongs to machine {}", request.machine_id));
+        if !request.fallback {
+            return fail(format!("belongs to machine {}", request.machine_id));
+        }
+        println!(
+            "fallback invoke {}: owner {} -> {} (deployment {})",
+            request.invocation_id,
+            request
+                .owner_machine_id
+                .clone()
+                .unwrap_or_else(|| request.machine_id.clone()),
+            config.machine_id,
+            request.deployment_id
+        );
     }
 
     // The deploy pipeline left worker.wasm in the deployment work dir; if the
@@ -418,9 +466,11 @@ async fn run_invocation(
         match request.artifact_key.clone() {
             Some(key) => {
                 println!("  artifact not cached, pulling {key}");
+                let t = std::time::Instant::now();
                 if let Err(error) = download_file(client, config, &key, &wasm_path).await {
                     return fail(format!("artifact download failed: {error}"));
                 }
+                println!("  artifact pulled in {}ms", t.elapsed().as_millis());
             }
             None => return fail("no wasm artifact for this deployment".to_owned()),
         }

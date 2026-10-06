@@ -4,8 +4,11 @@
 //! the wasm (built earlier by the deploy pipeline, or re-downloaded from R2
 //! via the coordinator) runs here on the node — never on the server.
 
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock, Mutex};
 use std::time::Duration;
 use wasmtime::{Config, Engine, Linker, Module, Store};
 use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
@@ -42,6 +45,82 @@ pub enum ExecError {
     Failed(String),
 }
 
+/// One process-wide engine; compiling is per-module below.
+static ENGINE: LazyLock<Engine> = LazyLock::new(|| {
+    let mut config = Config::new();
+    config.consume_fuel(true);
+    config.epoch_interruption(true);
+    Engine::new(&config).expect("wasmtime engine")
+});
+
+struct CachedModule {
+    wasm_len: usize,
+    module: Module,
+}
+
+/// Content-addressed compile cache: a fresh `Engine` + Cranelift compile per
+/// hit cost ~18s for Javy/QuickJS artifacts (past the server's wait window,
+/// so every invoke 504'd while the agent later reported done). Hits skip it.
+static MODULE_CACHE: LazyLock<Mutex<HashMap<u64, CachedModule>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// Bound RSS on nodes serving many workers; eviction is a whole-cache clear
+/// (next hit for each worker recompiles once).
+const MAX_CACHED_MODULES: usize = 128;
+
+fn wasm_hash(bytes: &[u8]) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    bytes.hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Compile `wasm` into the shared cache without running it. Best-effort:
+/// pre-warms after deploy and at startup so the first invoke stays fast.
+pub fn precache(wasm: Vec<u8>) {
+    if wasm == PLACEHOLDER_WASM {
+        return;
+    }
+    match compiled_module(&wasm) {
+        Ok(_) => println!("warmed module cache ({} bytes)", wasm.len()),
+        Err(error) => eprintln!("cache warm failed: {error}"),
+    }
+}
+
+/// Return the cached module for these exact bytes, compiling on miss.
+/// The lock is held across the compile on purpose: concurrent misses for the
+/// same bytes serialize (single-flight) instead of running two Cranelift
+/// compiles in parallel and slowing each other down. Hits hold it for µs.
+fn compiled_module(wasm: &[u8]) -> Result<Module, ExecError> {
+    let hash = wasm_hash(wasm);
+    let mut cache = MODULE_CACHE
+        .lock()
+        .map_err(|error| ExecError::Failed(format!("cache lock: {error}")))?;
+    if let Some(hit) = cache.get(&hash) {
+        if hit.wasm_len == wasm.len() {
+            return Ok(hit.module.clone());
+        }
+    }
+    let started = std::time::Instant::now();
+    let module =
+        Module::new(&*ENGINE, wasm).map_err(|e| ExecError::Failed(format!("compile: {e}")))?;
+    println!(
+        "compiled wasm ({} bytes) in {}ms",
+        wasm.len(),
+        started.elapsed().as_millis()
+    );
+    if cache.len() >= MAX_CACHED_MODULES {
+        cache.clear();
+    }
+    cache.insert(
+        hash,
+        CachedModule {
+            wasm_len: wasm.len(),
+            module: module.clone(),
+        },
+    );
+    Ok(module)
+}
+
 impl std::fmt::Display for ExecError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -60,15 +139,10 @@ pub fn execute(input: ExecInput) -> Result<ExecOutput, ExecError> {
             "artifact is an empty placeholder wasm (the build toolchain was unavailable when it was deployed); redeploy the function".to_owned(),
         ));
     }
-    let mut config = Config::new();
-    config.consume_fuel(true);
-    config.epoch_interruption(true);
-    let engine =
-        Engine::new(&config).map_err(|e| ExecError::Failed(format!("engine: {e}")))?;
-    let module = Module::new(&engine, &input.wasm)
-        .map_err(|e| ExecError::Failed(format!("compile: {e}")))?;
+    let engine: &Engine = &ENGINE;
+    let module = compiled_module(&input.wasm)?;
 
-    let mut linker: Linker<WasiP1Ctx> = Linker::new(&engine);
+    let mut linker: Linker<WasiP1Ctx> = Linker::new(engine);
     preview1::add_to_linker_sync(&mut linker, |t| t)
         .map_err(|e| ExecError::Failed(format!("link wasi: {e}")))?;
 
@@ -83,7 +157,7 @@ pub fn execute(input: ExecInput) -> Result<ExecOutput, ExecError> {
     }
     let wasi_ctx = builder.build_p1();
 
-    let mut store = Store::new(&engine, wasi_ctx);
+    let mut store = Store::new(engine, wasi_ctx);
     store
         .set_fuel(FUEL)
         .map_err(|e| ExecError::Failed(format!("fuel: {e}")))?;

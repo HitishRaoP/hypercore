@@ -65,17 +65,31 @@ async function serve(record: DeploymentRow, functionPath: string, req: Request, 
 
   res.setHeader("x-hypercore-deployment", record.id);
   res.setHeader("x-hypercore-worker", record.workerName);
-  res.setHeader("x-hypercore-node", record.machineId);
 
   if (!outcome.delivered) {
+    res.setHeader("x-hypercore-node", record.machineId);
     return res.status(503).json({
       error: "Node is offline (no open SSE stream)",
       machineId: record.machineId,
       deploymentId: record.id,
+      fallbackAttempted: outcome.fallbackAttempted,
+      fallbackCandidates: outcome.fallbackCandidates,
     });
   }
+
+  // Fallback responses are attributed to the node that actually executed.
+  res.setHeader("x-hypercore-node", outcome.servedBy);
+  if (outcome.fallback) {
+    res.setHeader("x-hypercore-fallback", "true");
+    res.setHeader("x-hypercore-owner", record.machineId);
+  }
+
   if (outcome.timeout) {
-    return res.status(504).json({ error: "Node did not respond in time" });
+    return res.status(504).json({
+      error: "Node did not respond in time",
+      servedBy: outcome.servedBy,
+      fallback: outcome.fallback,
+    });
   }
 
   const result = outcome.result;
@@ -84,6 +98,7 @@ async function serve(record: DeploymentRow, functionPath: string, req: Request, 
       error: result.error ?? `Function exited with code ${result.code}`,
       stdout: decodeStdout(result).toString("utf8").slice(0, 1000),
       stderr: result.stderr ?? "",
+      ...(outcome.fallback ? { servedBy: outcome.servedBy, fallback: true } : {}),
     });
   }
   res.setHeader("x-hypercore-exit-code", "0");

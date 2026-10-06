@@ -7,7 +7,7 @@ import {
   type NewInvocationRow,
 } from "@hypercore/db/schema/invocations";
 import { env } from "../lib/env";
-import { pushEvent } from "../lib/scheduler";
+import { pushEvent, listOnlineAgents } from "../lib/scheduler";
 
 /**
  * Invocation fan-out + durable history.
@@ -58,9 +58,15 @@ export interface InvokeDispatch {
 }
 
 export type InvokeOutcome =
-  | { delivered: false }
-  | { delivered: true; timeout: true }
-  | { delivered: true; timeout?: false; result: AgentInvokeResult };
+  | { delivered: false; fallbackAttempted: boolean; fallbackCandidates: number }
+  | { delivered: true; timeout: true; servedBy: string; fallback: boolean }
+  | {
+      delivered: true;
+      timeout?: false;
+      result: AgentInvokeResult;
+      servedBy: string;
+      fallback: boolean;
+    };
 
 // ---------------------------------------------------------------------------
 // In-flight waits (ephemeral: pending HTTP responses)
@@ -69,33 +75,129 @@ export type InvokeOutcome =
 interface PendingWaiter {
   timer: NodeJS.Timeout;
   settle: (outcome: InvokeOutcome) => void;
+  servedBy: string;
+  fallback: boolean;
 }
 
 const pending = new Map<string, PendingWaiter>();
 
-function trackWaiter(invocationId: string, settle: PendingWaiter["settle"], waitMs: number): void {
+console.log("[invoke] fallback routing + db rendezvous enabled");
+
+function trackWaiter(
+  invocationId: string,
+  settle: PendingWaiter["settle"],
+  waitMs: number,
+  servedBy: string,
+  fallback: boolean,
+): void {
   const timer = setTimeout(() => {
+    const waiter = pending.get(invocationId);
     pending.delete(invocationId);
-    settle({ delivered: true, timeout: true });
+    console.log(
+      `[invoke] timeout ${invocationId} servedBy=${waiter?.servedBy ?? servedBy} fallback=${waiter?.fallback ?? fallback}`,
+    );
+    settle({
+      delivered: true,
+      timeout: true,
+      servedBy: waiter?.servedBy ?? servedBy,
+      fallback: waiter?.fallback ?? fallback,
+    });
   }, waitMs);
   // Don't keep the process alive for a lone timer.
   timer.unref?.();
-  pending.set(invocationId, { timer, settle });
+  pending.set(invocationId, { timer, settle, servedBy, fallback });
 }
 
 /** Settles and removes a waiter. Returns false when unknown/expired. */
-function settleWaiter(invocationId: string, outcome: InvokeOutcome): boolean {
+function settleWaiter(
+  invocationId: string,
+  outcome: { delivered: true; timeout: true } | { delivered: true; result: AgentInvokeResult },
+): boolean {
   const waiter = pending.get(invocationId);
   if (!waiter) return false;
   pending.delete(invocationId);
   clearTimeout(waiter.timer);
-  waiter.settle(outcome);
+  if ("result" in outcome) {
+    waiter.settle({
+      delivered: true,
+      result: outcome.result,
+      servedBy: waiter.servedBy,
+      fallback: waiter.fallback,
+    });
+  } else {
+    waiter.settle({
+      delivered: true,
+      timeout: true,
+      servedBy: waiter.servedBy,
+      fallback: waiter.fallback,
+    });
+  }
   return true;
 }
 
 /** Agent result callback. Returns false when unknown/expired. */
 export function resolveInvocation(invocationId: string, result: AgentInvokeResult): boolean {
   return settleWaiter(invocationId, { delivered: true, result });
+}
+
+/** Durable fallback: persist an agent result straight to Postgres.
+ * Used when no in-memory waiter exists (other API replica, or restart).
+ * Returns true when the invocation row existed. */
+export async function persistAgentResult(
+  invocationId: string,
+  result: AgentInvokeResult,
+): Promise<boolean> {
+  try {
+    const finishedAt = new Date();
+    const failed = !result.ok || (result.code !== undefined && result.code !== 0);
+    const timedOut = result.timedOut === true;
+    const [existing] = await db
+      .select({ createdAt: invocations.createdAt })
+      .from(invocations)
+      .where(eq(invocations.id, invocationId))
+      .limit(1);
+    if (!existing) return false;
+    // Late/cross-instance results still get a real duration instead of "—".
+    const durationMs = Math.max(0, finishedAt.getTime() - existing.createdAt.getTime());
+    await db
+      .update(invocations)
+      .set({
+        status: timedOut ? "timeout" : failed ? "failed" : "done",
+        exitCode: result.code ?? null,
+        durationMs,
+        stdoutPreview: previewStdout(result) || null,
+        error:
+          result.error ??
+          (timedOut ? "Node did not respond in time" : failed ? `Exited with code ${result.code}` : null),
+        finishedAt,
+      })
+      .where(eq(invocations.id, invocationId));
+    return true;
+  } catch (error) {
+    console.warn("[db] invocation result persist skipped:", (error as Error).message);
+    return false;
+  }
+}
+
+/** Single durable read for the cross-instance poll loop. */
+async function getInvocationById(invocationId: string): Promise<InvocationRow | undefined> {
+  try {
+    const [row] = await db
+      .select()
+      .from(invocations)
+      .where(eq(invocations.id, invocationId))
+      .limit(1);
+    return row;
+  } catch {
+    return undefined;
+  }
+}
+
+function cancelWaiter(invocationId: string): void {
+  const waiter = pending.get(invocationId);
+  if (!waiter) return;
+  pending.delete(invocationId);
+  clearTimeout(waiter.timer);
 }
 
 // ---------------------------------------------------------------------------
@@ -154,19 +256,102 @@ export async function invokeOnAgent(dispatch: InvokeDispatch): Promise<InvokeOut
   });
 
   return new Promise<InvokeOutcome>((resolve) => {
+    let done = false;
+    const pollRef: { current: NodeJS.Timeout | null } = { current: null };
     const settle = (outcome: InvokeOutcome) => {
+      if (done) return;
+      done = true;
+      if (pollRef.current) clearInterval(pollRef.current);
+      const elapsedMs = Date.now() - startedMs;
+      const what = !outcome.delivered
+        ? "undelivered"
+        : outcome.timeout
+          ? "timeout"
+          : `status=${outcome.result.ok ? "ok" : "err"}`;
+      console.log(
+        `[invoke] settled ${invocationId} ${what} in ${elapsedMs}ms fallback=${outcome.delivered ? outcome.fallback : false}`,
+      );
       void recordFinished(invocationId, outcome, Date.now() - startedMs).finally(() =>
         resolve(outcome),
       );
     };
-    trackWaiter(invocationId, settle, serverWaitMs);
 
-    const delivered = pushEvent(dispatch.machineId, "invoke", {
+    // Waiter first: the agent can POST /result before pushEvent returns,
+    // otherwise a fast (cached-wasm) fallback resolves to 404.
+    trackWaiter(invocationId, settle, serverWaitMs, dispatch.machineId, false);
+
+    // Cross-instance safety: pending is per-process. If the agent's POST
+    // lands on another API replica (or this process restarts), the waiter
+    // above never fires — poll the durable row instead so the HTTP request
+    // still completes (with the stored preview) instead of hanging to 504.
+    pollRef.current = setInterval(() => {
+      void (async () => {
+        if (done) return;
+        const row = await getInvocationById(invocationId);
+        if (!row || row.status === "running" || !row.finishedAt) return;
+        const waiter = pending.get(invocationId);
+        if (waiter) {
+          clearTimeout(waiter.timer);
+          pending.delete(invocationId);
+        }
+        const failed = row.status !== "done";
+        settle({
+          delivered: true,
+          result: {
+            machineId: row.machineId,
+            ok: !failed,
+            code: row.exitCode ?? undefined,
+            stdout: row.stdoutPreview ?? undefined,
+            stderr: "",
+            error: row.error ?? undefined,
+          },
+          servedBy: row.machineId,
+          fallback: waiter?.fallback ?? row.machineId !== dispatch.machineId,
+        });
+      })();
+    }, 750);
+    if (pollRef.current.unref) pollRef.current.unref();
+
+    // Primary path (unchanged): owner node only.
+    const primaryPayload = {
       invocationId,
       ...dispatch,
       timeoutMs: agentTimeoutMs,
-    });
-    if (!delivered) settle({ delivered: false });
+    };
+    if (pushEvent(dispatch.machineId, "invoke", primaryPayload)) {
+      return;
+    }
+
+    // Fallback path: owner is offline. Try any other online node. The
+    // fallback pulls worker.wasm from R2 via /code-upload/file on cache
+    // miss, so no pre-replication is needed.
+    const candidates = shuffle(listOnlineAgents().filter((id) => id !== dispatch.machineId));
+    for (const fallbackId of candidates) {
+      const fallbackPayload = {
+        invocationId,
+        ...dispatch,
+        machineId: fallbackId,
+        ownerMachineId: dispatch.machineId,
+        fallback: true,
+        timeoutMs: agentTimeoutMs,
+      };
+      if (pushEvent(fallbackId, "invoke", fallbackPayload)) {
+        console.log(
+          `[invoke] fallback ${invocationId} owner=${dispatch.machineId} -> ${fallbackId}`,
+        );
+        // Attribute history to the node that actually executed.
+        void retargetInvocationMachine(invocationId, fallbackId);
+        const waiter = pending.get(invocationId);
+        if (waiter) {
+          waiter.servedBy = fallbackId;
+          waiter.fallback = true;
+        }
+        return;
+      }
+    }
+
+    cancelWaiter(invocationId);
+    settle({ delivered: false, fallbackAttempted: true, fallbackCandidates: candidates.length });
   });
 }
 
@@ -178,6 +363,25 @@ type StartedRow = Pick<
   NewInvocationRow,
   "id" | "userId" | "deploymentId" | "workerName" | "machineId" | "method" | "path"
 >;
+
+function shuffle<T>(ids: T[]): T[] {
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = ids[i] as T;
+    ids[i] = ids[j] as T;
+    ids[j] = tmp;
+  }
+  return ids;
+}
+
+/** Best-effort: point the running row at the fallback executor. */
+async function retargetInvocationMachine(invocationId: string, machineId: string): Promise<void> {
+  try {
+    await db.update(invocations).set({ machineId }).where(eq(invocations.id, invocationId));
+  } catch (error) {
+    console.warn("[db] invocation retarget skipped:", (error as Error).message);
+  }
+}
 
 async function recordStarted(row: StartedRow): Promise<void> {
   try {

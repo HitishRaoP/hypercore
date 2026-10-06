@@ -4,6 +4,7 @@ import type { AuthedRequest } from "../lib/auth";
 import { toInvocationDto } from "../services/activity.service";
 import {
   listInvocationsByUser,
+  persistAgentResult,
   resolveInvocation,
 } from "../services/invocation.service";
 
@@ -12,11 +13,23 @@ import {
  * POST /invocations/:invocationId/result
  * { machineId, ok, code, stdoutB64?, stdout?, stderr?, error?, timedOut? }
  */
-export function postInvocationResult(req: Request, res: Response): Response {
+export async function postInvocationResult(req: Request, res: Response): Promise<Response> {
   const invocationId = req.params.invocationId as string;
-  const ok = resolveInvocation(invocationId, req.body ?? {});
-  if (!ok) return res.status(404).json({ error: "Unknown or expired invocationId" });
-  return res.json({ status: "received", invocationId });
+  const body = req.body ?? {};
+  if (resolveInvocation(invocationId, body)) {
+    console.log(`[invoke] result ${invocationId} received (same-process)`);
+    return res.json({ status: "received", invocationId });
+  }
+  // No in-memory waiter: different API replica or a restart since dispatch.
+  // Persist durably so the waiting poll loop (and history) still completes
+  // instead of sticking at running + logging 404 on the agent.
+  const persisted = await persistAgentResult(invocationId, body);
+  if (persisted) {
+    console.log(`[invoke] result ${invocationId} received-via-db (no waiter)`);
+    return res.json({ status: "received-via-db", invocationId });
+  }
+  console.warn(`[invoke] result for unknown invocation ${invocationId} (pending: gone, db: miss)`);
+  return res.status(404).json({ error: "Unknown or expired invocationId" });
 }
 
 /** GET /invocations — invocations of the signed-in user's deployments. */

@@ -170,7 +170,7 @@ function LogDetailContent({
               </KV>
             )}
             <KV label="Deployment" mono>
-              {deployment ? shortId(deployment.deploymentId) : "—"}
+              {deployment ? shortId(deployment.deploymentId) : shortId(invocation.deploymentId)}
             </KV>
           </div>
           <Separator />
