@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getStatus, listOnline, streamEvents } from "../controllers/agents.controller";
+import {
+	getStatus,
+	listOnline,
+	streamEvents,
+} from "../controllers/agents.controller";
 
 const router = Router();
 

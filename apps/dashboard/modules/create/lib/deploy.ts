@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  adjectives,
-  animals,
-  NumberDictionary,
-  uniqueNamesGenerator,
+	adjectives,
+	animals,
+	NumberDictionary,
+	uniqueNamesGenerator,
 } from "unique-names-generator";
 import { env } from "@/lib/env";
 
@@ -43,68 +43,72 @@ export const HELLO_WORLD_BUN_LOCK = `{
 `;
 
 export function helloWorldFiles(indexTsContent?: string): File[] {
-  const indexTs =
-    typeof indexTsContent === "string" && indexTsContent.length > 0
-      ? indexTsContent
-      : HELLO_WORLD_INDEX_TS;
-  return [
-    new File([indexTs], "index.ts", { type: "text/typescript" }),
-    new File([HELLO_WORLD_PACKAGE_JSON], "package.json", {
-      type: "application/json",
-    }),
-    new File([HELLO_WORLD_BUN_LOCK], "bun.lock", {
-      type: "application/json",
-    }),
-  ];
+	const indexTs =
+		typeof indexTsContent === "string" && indexTsContent.length > 0
+			? indexTsContent
+			: HELLO_WORLD_INDEX_TS;
+	return [
+		new File([indexTs], "index.ts", { type: "text/typescript" }),
+		new File([HELLO_WORLD_PACKAGE_JSON], "package.json", {
+			type: "application/json",
+		}),
+		new File([HELLO_WORLD_BUN_LOCK], "bun.lock", {
+			type: "application/json",
+		}),
+	];
 }
 
 export async function fetchOnlineAgents(): Promise<string[]> {
-  const res = await fetch(`${env.API_URL}/agents/online`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json().catch(() => null);
-  return Array.isArray(data?.online) ? data.online : [];
+	const res = await fetch(`${env.API_URL}/agents/online`, {
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const data = await res.json().catch(() => null);
+	return Array.isArray(data?.online) ? data.online : [];
 }
 
 /** One registered execution node (GET /api/v1/nodes). */
 export interface MachineNode {
-  machineId: string;
-  hostname: string;
-  osName: string;
-  osVersion: string;
-  kernelVersion: string;
-  arch: string;
-  cpuLogicalCores: number;
-  cpuPhysicalCores: number;
-  cpuBrand: string;
-  totalMemoryMb: number;
-  usedMemoryMb: number;
-  totalDiskMb: number;
-  availableDiskMb: number;
-  localIp: string;
-  firstSeenAt: string;
-  lastSeenAt: string;
-  online: boolean;
+	machineId: string;
+	hostname: string;
+	osName: string;
+	osVersion: string;
+	kernelVersion: string;
+	arch: string;
+	cpuLogicalCores: number;
+	cpuPhysicalCores: number;
+	cpuBrand: string;
+	totalMemoryMb: number;
+	usedMemoryMb: number;
+	totalDiskMb: number;
+	availableDiskMb: number;
+	localIp: string;
+	firstSeenAt: string;
+	lastSeenAt: string;
+	online: boolean;
 }
 
 export async function fetchNodes(): Promise<MachineNode[]> {
-  const res = await fetch(`${env.API_URL}/api/v1/nodes`, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json().catch(() => null);
-  return Array.isArray(data?.nodes) ? (data.nodes as MachineNode[]) : [];
+	const res = await fetch(`${env.API_URL}/api/v1/nodes`, {
+		cache: "no-store",
+	});
+	if (!res.ok) return [];
+	const data = await res.json().catch(() => null);
+	return Array.isArray(data?.nodes) ? (data.nodes as MachineNode[]) : [];
 }
 
 /** Random worker slug in the style of "brave-fox-3588". */
 export function generateWorkerSlug(): string {
-  return uniqueNamesGenerator({
-    dictionaries: [
-      adjectives,
-      animals,
-      NumberDictionary.generate({ min: 1000, max: 9999 }),
-    ],
-    separator: "-",
-    length: 3,
-    style: "lowerCase",
-  });
+	return uniqueNamesGenerator({
+		dictionaries: [
+			adjectives,
+			animals,
+			NumberDictionary.generate({ min: 1000, max: 9999 }),
+		],
+		separator: "-",
+		length: 3,
+		style: "lowerCase",
+	});
 }
 
 /**
@@ -112,45 +116,47 @@ export function generateWorkerSlug(): string {
  * the first random slug when availability can't be verified.
  */
 export async function generateAvailableWorkerSlug(
-  attempts = 8,
+	attempts = 8,
 ): Promise<string> {
-  let slug = generateWorkerSlug();
-  for (let attempt = 0; attempt < attempts; attempt++) {
-    const taken = await checkWorkerNameTaken(slug);
-    if (taken !== true) return slug;
-    slug = generateWorkerSlug();
-  }
-  return slug;
+	let slug = generateWorkerSlug();
+	for (let attempt = 0; attempt < attempts; attempt++) {
+		const taken = await checkWorkerNameTaken(slug);
+		if (taken !== true) return slug;
+		slug = generateWorkerSlug();
+	}
+	return slug;
 }
 
 /**
  * True when the name is already taken, false when free, null when the
  * API couldn't be reached (deploy will still validate server-side).
  */
-export async function checkWorkerNameTaken(name: string): Promise<boolean | null> {
-  const workerName = name.trim();
-  if (!workerName) return null;
-  try {
-    const res = await fetch(
-      `${env.API_URL}/code-upload/check-name?workerName=${encodeURIComponent(workerName)}`,
-      { cache: "no-store" },
-    );
-    if (!res.ok) return null;
-    const data = await res.json().catch(() => null);
-    return typeof data?.taken === "boolean" ? data.taken : null;
-  } catch {
-    return null;
-  }
+export async function checkWorkerNameTaken(
+	name: string,
+): Promise<boolean | null> {
+	const workerName = name.trim();
+	if (!workerName) return null;
+	try {
+		const res = await fetch(
+			`${env.API_URL}/code-upload/check-name?workerName=${encodeURIComponent(workerName)}`,
+			{ cache: "no-store" },
+		);
+		if (!res.ok) return null;
+		const data = await res.json().catch(() => null);
+		return typeof data?.taken === "boolean" ? data.taken : null;
+	} catch {
+		return null;
+	}
 }
 
 /** Shared deploy-response shape rendered by the success card. */
 export interface DeployResultData {
-  status: string;
-  deploymentId: string;
-  workerName: string;
-  machineId: string;
-  entrypoint: string;
-  files: { name: string; key: string }[];
-  invokeUrl: string;
-  workerUrl: string;
+	status: string;
+	deploymentId: string;
+	workerName: string;
+	machineId: string;
+	entrypoint: string;
+	files: { name: string; key: string }[];
+	invokeUrl: string;
+	workerUrl: string;
 }

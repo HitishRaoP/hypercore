@@ -14,55 +14,58 @@ import { listInvocationsByMachine } from "./invocation.service";
 // ---------------------------------------------------------------------------
 
 export interface DeploymentDto {
-  deploymentId: string;
-  workerName: string;
-  machineId: string;
-  entrypoint: string;
-  files: DeploymentRow["files"];
-  status: DeploymentRow["status"];
-  artifactKey: string | null;
-  createdAt: string;
+	deploymentId: string;
+	workerName: string;
+	machineId: string;
+	entrypoint: string;
+	files: DeploymentRow["files"];
+	status: DeploymentRow["status"];
+	artifactKey: string | null;
+	createdAt: string;
 }
 
 export interface InvocationDto {
-  invocationId: string;
-  deploymentId: string;
-  workerName: string;
-  machineId: string;
-  method: string;
-  path: string;
-  status: InvocationRow["status"];
-  exitCode: number | null;
-  durationMs: number | null;
-  stdoutPreview: string | null;
-  error: string | null;
-  startedAt: string;
-  finishedAt: string | null;
+	invocationId: string;
+	deploymentId: string;
+	workerName: string;
+	machineId: string;
+	method: string;
+	path: string;
+	status: InvocationRow["status"];
+	exitCode: number | null;
+	durationMs: number | null;
+	stdoutPreview: string | null;
+	error: string | null;
+	startedAt: string;
+	finishedAt: string | null;
 }
 
 export interface ActivityResult {
-  source: "postgres";
-  online: boolean;
-  deployments: DeploymentDto[];
-  invocations: InvocationDto[];
+	source: "postgres";
+	online: boolean;
+	deployments: DeploymentDto[];
+	invocations: InvocationDto[];
 }
 
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
-export async function getActivity(machineId: string, limit: number): Promise<ActivityResult> {
-  const safeLimit = Math.min(Math.max(limit, 1), 100);
-  const [deploymentRows, invocationRows] = await Promise.all([
-    listDeploymentsByMachine(machineId, safeLimit),
-    listInvocationsByMachine(machineId, safeLimit),
-  ]);
-  return {
-    source: "postgres",
-    online: isAgentOnline(machineId),
-    deployments: deploymentRows.map(toDeploymentDto),
-    invocations: invocationRows.map(toInvocationDto),
-  };
+export async function getActivity(
+	machineId: string,
+	limit: number,
+): Promise<ActivityResult> {
+	const safeLimit = Math.min(Math.max(limit, 1), 100);
+	const [deploymentRows, invocationRows] = await Promise.all([
+		listDeploymentsByMachine(machineId, safeLimit),
+		listInvocationsByMachine(machineId, safeLimit),
+	]);
+	return {
+		source: "postgres",
+		online: isAgentOnline(machineId),
+		deployments: deploymentRows.map(toDeploymentDto),
+		invocations: invocationRows.map(toInvocationDto),
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -70,32 +73,32 @@ export async function getActivity(machineId: string, limit: number): Promise<Act
 // ---------------------------------------------------------------------------
 
 export function toDeploymentDto(row: DeploymentRow): DeploymentDto {
-  return {
-    deploymentId: row.id,
-    workerName: row.workerName,
-    machineId: row.machineId,
-    entrypoint: row.entrypoint,
-    files: row.files,
-    status: row.status,
-    artifactKey: row.artifactKey,
-    createdAt: row.createdAt.toISOString(),
-  };
+	return {
+		deploymentId: row.id,
+		workerName: row.workerName,
+		machineId: row.machineId,
+		entrypoint: row.entrypoint,
+		files: row.files,
+		status: row.status,
+		artifactKey: row.artifactKey,
+		createdAt: row.createdAt.toISOString(),
+	};
 }
 
 export function toInvocationDto(row: InvocationRow): InvocationDto {
-  return {
-    invocationId: row.id,
-    deploymentId: row.deploymentId,
-    workerName: row.workerName,
-    machineId: row.machineId,
-    method: row.method,
-    path: row.path,
-    status: row.status,
-    exitCode: row.exitCode,
-    durationMs: row.durationMs,
-    stdoutPreview: row.stdoutPreview,
-    error: row.error,
-    startedAt: row.createdAt.toISOString(),
-    finishedAt: row.finishedAt?.toISOString() ?? null,
-  };
+	return {
+		invocationId: row.id,
+		deploymentId: row.deploymentId,
+		workerName: row.workerName,
+		machineId: row.machineId,
+		method: row.method,
+		path: row.path,
+		status: row.status,
+		exitCode: row.exitCode,
+		durationMs: row.durationMs,
+		stdoutPreview: row.stdoutPreview,
+		error: row.error,
+		startedAt: row.createdAt.toISOString(),
+		finishedAt: row.finishedAt?.toISOString() ?? null,
+	};
 }

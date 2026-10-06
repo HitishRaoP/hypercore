@@ -24,71 +24,77 @@ import type { Response } from "express";
  */
 
 export interface DeploymentFileRef {
-  name: string;
-  key: string;
+	name: string;
+	key: string;
 }
 
 export interface DeploymentPayload {
-  deploymentId: string;
-  machineId: string;
-  objectKey: string;
-  workerName?: string;
-  entrypoint?: string;
-  files?: DeploymentFileRef[];
+	deploymentId: string;
+	machineId: string;
+	objectKey: string;
+	workerName?: string;
+	entrypoint?: string;
+	files?: DeploymentFileRef[];
 }
 
 type AgentConnection = {
-  res: Response;
-  heartbeat: NodeJS.Timeout;
+	res: Response;
+	heartbeat: NodeJS.Timeout;
 };
 
 const agents = new Map<string, AgentConnection>();
 
 function sseWrite(res: Response, event: string, data: unknown) {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${typeof data === "string" ? data : JSON.stringify(data)}\n\n`);
+	res.write(`event: ${event}\n`);
+	res.write(
+		`data: ${typeof data === "string" ? data : JSON.stringify(data)}\n\n`,
+	);
 }
 
 export function addAgent(machineId: string, res: Response) {
-  // One active stream per machine. Replace a stale stream on reconnect.
-  removeAgent(machineId);
+	// One active stream per machine. Replace a stale stream on reconnect.
+	removeAgent(machineId);
 
-  // Keep proxies / load-balancers from buffering the stream.
-  // Bail out the moment the socket is gone instead of writing into it:
-  // a failed write is what used to crash the process (and surface as
-  // 502s at the proxy while it restarted).
-  const heartbeat = setInterval(() => {
-    if (res.destroyed || res.writableEnded) {
-      clearInterval(heartbeat);
-      removeAgent(machineId);
-      return;
-    }
-    try {
-      res.write(`: heartbeat\n\n`);
-    } catch {
-      clearInterval(heartbeat);
-      removeAgent(machineId);
-    }
-  }, 25_000);
+	// Keep proxies / load-balancers from buffering the stream.
+	// Bail out the moment the socket is gone instead of writing into it:
+	// a failed write is what used to crash the process (and surface as
+	// 502s at the proxy while it restarted).
+	const heartbeat = setInterval(() => {
+		if (res.destroyed || res.writableEnded) {
+			clearInterval(heartbeat);
+			removeAgent(machineId);
+			return;
+		}
+		try {
+			res.write(`: heartbeat\n\n`);
+		} catch {
+			clearInterval(heartbeat);
+			removeAgent(machineId);
+		}
+	}, 25_000);
 
-  agents.set(machineId, { res, heartbeat });
-  console.log(`[scheduler] agent connected: ${machineId} (online: ${agents.size})`);
+	agents.set(machineId, { res, heartbeat });
+	console.log(
+		`[scheduler] agent connected: ${machineId} (online: ${agents.size})`,
+	);
 }
 
 export function removeAgent(machineId: string) {
-  const existing = agents.get(machineId);
-  if (!existing) return;
-  clearInterval(existing.heartbeat);
-  agents.delete(machineId);
-  console.log(`[scheduler] agent disconnected: ${machineId} (online: ${agents.size})`);
+	const existing = agents.get(machineId);
+	if (!existing) return;
+	clearInterval(existing.heartbeat);
+	agents.delete(machineId);
+	console.log(
+		`[scheduler] agent disconnected: ${machineId} (online: ${agents.size})`,
+	);
 }
 
 export function isAgentOnline(machineId: string) {
-  return agents.has(machineId);
+	return agents.has(machineId);
 }
 
 export function listOnlineAgents() {
-  return [...agents.keys()];
+	return [...agents.keys()];
 }
 
 /**
@@ -96,16 +102,19 @@ export function listOnlineAgents() {
  * Returns false when the target agent has no open SSE stream.
  */
 export function pushEvent(machineId: string, event: string, data: unknown) {
-  const conn = agents.get(machineId);
-  if (!conn) return false;
-  try {
-    sseWrite(conn.res, event, data);
-    return true;
-  } catch (error) {
-    console.error(`[scheduler] failed to push ${event} to ${machineId}:`, error);
-    removeAgent(machineId);
-    return false;
-  }
+	const conn = agents.get(machineId);
+	if (!conn) return false;
+	try {
+		sseWrite(conn.res, event, data);
+		return true;
+	} catch (error) {
+		console.error(
+			`[scheduler] failed to push ${event} to ${machineId}:`,
+			error,
+		);
+		removeAgent(machineId);
+		return false;
+	}
 }
 
 /**
@@ -113,11 +122,11 @@ export function pushEvent(machineId: string, event: string, data: unknown) {
  * Returns false when the target agent has no open SSE stream.
  */
 export function pushDeployment(payload: DeploymentPayload) {
-  const ok = pushEvent(payload.machineId, "deployment", payload);
-  if (ok) {
-    console.log(
-      `[scheduler] routed deployment ${payload.deploymentId} -> ${payload.machineId}`,
-    );
-  }
-  return ok;
+	const ok = pushEvent(payload.machineId, "deployment", payload);
+	if (ok) {
+		console.log(
+			`[scheduler] routed deployment ${payload.deploymentId} -> ${payload.machineId}`,
+		);
+	}
+	return ok;
 }

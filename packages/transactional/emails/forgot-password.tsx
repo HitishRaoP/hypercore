@@ -1,6 +1,5 @@
-'use client';
+"use client";
 
-import React from 'react';
 import {
 	Body,
 	Button,
@@ -11,7 +10,8 @@ import {
 	Preview,
 	Section,
 	Text,
-} from '@react-email/components';
+} from "@react-email/components";
+import React from "react";
 
 type ForgotPasswordEmailProps = {
 	/**
@@ -26,7 +26,7 @@ type ForgotPasswordEmailProps = {
 
 function ForgotPasswordEmail({
 	url,
-	siteName = 'Hypercore',
+	siteName = "Hypercore",
 }: ForgotPasswordEmailProps) {
 	return (
 		<Html>
@@ -35,26 +35,26 @@ function ForgotPasswordEmail({
 			<Body
 				style={{
 					margin: 0,
-					backgroundColor: '#f3f4f6',
+					backgroundColor: "#f3f4f6",
 					fontFamily:
 						'-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 				}}
 			>
 				<Container
 					style={{
-						maxWidth: '480px',
-						margin: '40px auto',
-						padding: '32px 24px',
-						backgroundColor: '#ffffff',
-						borderRadius: '12px',
-						border: '1px solid #e5e7eb',
+						maxWidth: "480px",
+						margin: "40px auto",
+						padding: "32px 24px",
+						backgroundColor: "#ffffff",
+						borderRadius: "12px",
+						border: "1px solid #e5e7eb",
 					}}
 				>
 					<Heading
 						style={{
-							fontSize: '24px',
-							margin: '0 0 12px',
-							color: '#111827',
+							fontSize: "24px",
+							margin: "0 0 12px",
+							color: "#111827",
 						}}
 					>
 						Reset your password
@@ -62,29 +62,35 @@ function ForgotPasswordEmail({
 
 					<Text
 						style={{
-							fontSize: '14px',
-							lineHeight: '22px',
-							color: '#4b5563',
-							margin: '0 0 16px',
+							fontSize: "14px",
+							lineHeight: "22px",
+							color: "#4b5563",
+							margin: "0 0 16px",
 						}}
 					>
-						We received a request to reset the password for your {siteName}{' '}
-						account. If you made this request, click the button below to choose
-						a new password.
+						We received a request to reset the password
+						for your {siteName} account. If you made
+						this request, click the button below to
+						choose a new password.
 					</Text>
 
-					<Section style={{ textAlign: 'center', margin: '24px 0' }}>
+					<Section
+						style={{
+							textAlign: "center",
+							margin: "24px 0",
+						}}
+					>
 						<Button
 							href={url}
 							style={{
-								display: 'inline-block',
-								backgroundColor: '#111827',
-								color: '#ffffff',
-								padding: '12px 24px',
-								borderRadius: '9999px',
-								fontSize: '14px',
+								display: "inline-block",
+								backgroundColor: "#111827",
+								color: "#ffffff",
+								padding: "12px 24px",
+								borderRadius: "9999px",
+								fontSize: "14px",
 								fontWeight: 600,
-								textDecoration: 'none',
+								textDecoration: "none",
 							}}
 						>
 							Reset password
@@ -93,22 +99,23 @@ function ForgotPasswordEmail({
 
 					<Text
 						style={{
-							fontSize: '12px',
-							lineHeight: '20px',
-							color: '#6b7280',
-							margin: '0 0 8px',
+							fontSize: "12px",
+							lineHeight: "20px",
+							color: "#6b7280",
+							margin: "0 0 8px",
 						}}
 					>
-						If the button doesn&apos;t work, you can also copy and paste this
-						link into your browser:
+						If the button doesn&apos;t work, you can
+						also copy and paste this link into your
+						browser:
 					</Text>
 
 					<Text
 						style={{
-							fontSize: '12px',
-							lineHeight: '18px',
-							color: '#111827',
-							wordBreak: 'break-all',
+							fontSize: "12px",
+							lineHeight: "18px",
+							color: "#111827",
+							wordBreak: "break-all",
 						}}
 					>
 						{url}
@@ -116,22 +123,23 @@ function ForgotPasswordEmail({
 
 					<Text
 						style={{
-							fontSize: '12px',
-							lineHeight: '20px',
-							color: '#9ca3af',
-							marginTop: '24px',
+							fontSize: "12px",
+							lineHeight: "20px",
+							color: "#9ca3af",
+							marginTop: "24px",
 						}}
 					>
-						If you didn&apos;t request a password reset, you can safely ignore
-						this email. Your password will not be changed.
+						If you didn&apos;t request a password reset,
+						you can safely ignore this email. Your
+						password will not be changed.
 					</Text>
 
 					<Text
 						style={{
-							fontSize: '12px',
-							lineHeight: '18px',
-							color: '#9ca3af',
-							marginTop: '12px',
+							fontSize: "12px",
+							lineHeight: "18px",
+							color: "#9ca3af",
+							marginTop: "12px",
 						}}
 					>
 						— The {siteName} team
@@ -141,5 +149,6 @@ function ForgotPasswordEmail({
 		</Html>
 	);
 }
+
 export { ForgotPasswordEmail };
 export default ForgotPasswordEmail;

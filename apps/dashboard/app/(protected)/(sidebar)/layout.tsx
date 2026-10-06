@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
-import { SignedIn } from "@/modules/auth/components/signed-in";
 import { ProtectedShell } from "@/components/protected-shell";
+import { SignedIn } from "@/modules/auth/components/signed-in";
 
 export default function ProtectedLayout({
-  children,
+	children,
 }: Readonly<{ children: ReactNode }>) {
-  return (
-    <SignedIn>
-      <ProtectedShell>{children}</ProtectedShell>
-    </SignedIn>
-  );
+	return (
+		<SignedIn>
+			<ProtectedShell>{children}</ProtectedShell>
+		</SignedIn>
+	);
 }

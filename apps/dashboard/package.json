@@ -1,35 +1,35 @@
 {
-  "name": "@hypercore/web",
-  "version": "0.1.0",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --port 3000",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint --max-warnings 0",
-    "check-types": "next typegen && tsc --noEmit"
-  },
-  "dependencies": {
-    "@better-auth/passkey": "^1.7.6",
-    "@hypercore/ui": "*",
-    "@monaco-editor/react": "^4.7.0",
-    "@tanstack/react-form": "^1.33.5",
-    "axios": "^1.20.0",
-    "better-auth": "^1.7.6",
-    "lucide-react": "^1.44.0",
-    "next": "16.3.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "unique-names-generator": "^4.7.1"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "*",
-    "@hypercore/typescript-config": "*",
-    "@types/node": "^22.15.3",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
-    "eslint": "^9.39.1",
-    "typescript": "5.9.2"
-  }
+	"name": "@hypercore/web",
+	"version": "0.1.0",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --port 3000",
+		"build": "next build",
+		"start": "next start",
+		"lint": "eslint --max-warnings 0",
+		"check-types": "next typegen && tsc --noEmit"
+	},
+	"dependencies": {
+		"@better-auth/passkey": "^1.7.6",
+		"@hypercore/ui": "*",
+		"@monaco-editor/react": "^4.7.0",
+		"@tanstack/react-form": "^1.33.5",
+		"axios": "^1.20.0",
+		"better-auth": "^1.7.6",
+		"lucide-react": "^1.44.0",
+		"next": "16.3.0",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0",
+		"unique-names-generator": "^4.7.1"
+	},
+	"devDependencies": {
+		"@repo/eslint-config": "*",
+		"@hypercore/typescript-config": "*",
+		"@types/node": "^22.15.3",
+		"@types/react": "19.2.2",
+		"@types/react-dom": "19.2.2",
+		"eslint": "^9.39.1",
+		"typescript": "5.9.2"
+	}
 }

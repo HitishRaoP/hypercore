@@ -1,134 +1,152 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Dices, Loader2, XCircle } from "lucide-react";
-
 import { Button } from "@hypercore/ui/components/button";
 import { Input } from "@hypercore/ui/components/input";
 import { cn } from "@hypercore/ui/lib/utils";
-import {
-  checkWorkerNameTaken,
-  generateAvailableWorkerSlug,
-} from "../lib/deploy";
+import { CheckCircle2, Dices, Loader2, XCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { env } from "@/lib/env";
+import {
+	checkWorkerNameTaken,
+	generateAvailableWorkerSlug,
+} from "../lib/deploy";
 
-export type WorkerNameStatus = "idle" | "checking" | "available" | "taken" | "unknown";
+export type WorkerNameStatus =
+	| "idle"
+	| "checking"
+	| "available"
+	| "taken"
+	| "unknown";
 
 const WORKER_URL_PREFIX = `${env.API_URL}/w/`;
 
 interface WorkerNameFieldProps {
-  id?: string;
-  value: string;
-  onChange: (value: string) => void;
-  onStatusChange?: (status: WorkerNameStatus) => void;
-  /** Height applied to the prefix addon, input and regenerate button. */
-  heightClass?: string;
+	id?: string;
+	value: string;
+	onChange: (value: string) => void;
+	onStatusChange?: (status: WorkerNameStatus) => void;
+	/** Height applied to the prefix addon, input and regenerate button. */
+	heightClass?: string;
 }
 
 export const WorkerNameField = ({
-  id,
-  value,
-  onChange,
-  onStatusChange,
-  heightClass = "h-[45px]",
+	id,
+	value,
+	onChange,
+	onStatusChange,
+	heightClass = "h-[45px]",
 }: WorkerNameFieldProps) => {
-  const [status, setStatus] = useState<WorkerNameStatus>("idle");
-  const [generating, setGenerating] = useState(false);
-  const requestId = useRef(0);
+	const [status, setStatus] = useState<WorkerNameStatus>("idle");
+	const [generating, setGenerating] = useState(false);
+	const requestId = useRef(0);
 
-  useEffect(() => {
-    onStatusChange?.(status);
-  }, [status, onStatusChange]);
+	useEffect(() => {
+		onStatusChange?.(status);
+	}, [status, onStatusChange]);
 
-  useEffect(() => {
-    const name = value.trim();
-    if (!name) {
-      setStatus("idle");
-      return;
-    }
-    setStatus("checking");
-    const current = ++requestId.current;
-    const timer = setTimeout(() => {
-      void (async () => {
-        const taken = await checkWorkerNameTaken(name);
-        if (requestId.current !== current) return;
-        setStatus(taken === true ? "taken" : taken === false ? "available" : "unknown");
-      })();
-    }, 450);
-    return () => clearTimeout(timer);
-  }, [value]);
+	useEffect(() => {
+		const name = value.trim();
+		if (!name) {
+			setStatus("idle");
+			return;
+		}
+		setStatus("checking");
+		const current = ++requestId.current;
+		const timer = setTimeout(() => {
+			void (async () => {
+				const taken = await checkWorkerNameTaken(name);
+				if (requestId.current !== current) return;
+				setStatus(
+					taken === true
+						? "taken"
+						: taken === false
+							? "available"
+							: "unknown",
+				);
+			})();
+		}, 450);
+		return () => clearTimeout(timer);
+	}, [value]);
 
-  const regenerate = async () => {
-    setGenerating(true);
-    try {
-      onChange(await generateAvailableWorkerSlug());
-    } finally {
-      setGenerating(false);
-    }
-  };
+	const regenerate = async () => {
+		setGenerating(true);
+		try {
+			onChange(await generateAvailableWorkerSlug());
+		} finally {
+			setGenerating(false);
+		}
+	};
 
-  return (
-    <div className="space-y-2">
-      <label htmlFor={id} className="text-[16px] font-medium">
-        Worker name
-      </label>
-      <div className="flex">
-        <span
-          className={cn(
-            "inline-flex max-w-[55%] shrink-0 items-center truncate rounded-l-xl border border-r-0 border-input bg-muted px-3 font-mono text-sm text-muted-foreground",
-            heightClass,
-          )}
-        >
-          {WORKER_URL_PREFIX}
-        </span>
-        <Input
-          id={id}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="my-worker"
-          className={cn("flex-1 rounded-none border-x-0 text-[16px]", heightClass)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void regenerate()}
-          disabled={generating}
-          title="Generate a new unique name"
-          aria-label="Generate a new unique name"
-          className={cn("shrink-0 rounded-l-none rounded-r-xl px-3", heightClass)}
-        >
-          {generating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Dices className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
-      <div className="space-y-0.5">
-        {status === "checking" && (
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Checking availability…
-          </p>
-        )}
-        {status === "available" && (
-          <p className="flex items-center gap-1.5 text-sm text-[var(--status-success)]">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Name available
-          </p>
-        )}
-        {status === "taken" && (
-          <p className="flex items-center gap-1.5 text-sm text-[var(--status-danger)]">
-            <XCircle className="h-3.5 w-3.5" />
-            Name already taken — pick another or regenerate.
-          </p>
-        )}
-        {status === "unknown" && (
-          <p className="text-sm text-[var(--status-warning)]">
-            Couldn&apos;t verify availability — the server will validate on deploy.
-          </p>
-        )}
-      </div>
-    </div>
-  );
+	return (
+		<div className="space-y-2">
+			<label htmlFor={id} className="text-[16px] font-medium">
+				Worker name
+			</label>
+			<div className="flex">
+				<span
+					className={cn(
+						"inline-flex max-w-[55%] shrink-0 items-center truncate rounded-l-xl border border-r-0 border-input bg-muted px-3 font-mono text-sm text-muted-foreground",
+						heightClass,
+					)}
+				>
+					{WORKER_URL_PREFIX}
+				</span>
+				<Input
+					id={id}
+					value={value}
+					onChange={(e) => onChange(e.target.value)}
+					placeholder="my-worker"
+					className={cn(
+						"flex-1 rounded-none border-x-0 text-[16px]",
+						heightClass,
+					)}
+				/>
+				<Button
+					type="button"
+					variant="outline"
+					onClick={() => void regenerate()}
+					disabled={generating}
+					title="Generate a new unique name"
+					aria-label="Generate a new unique name"
+					className={cn(
+						"shrink-0 rounded-l-none rounded-r-xl px-3",
+						heightClass,
+					)}
+				>
+					{generating ? (
+						<Loader2 className="h-4 w-4 animate-spin" />
+					) : (
+						<Dices className="h-4 w-4" />
+					)}
+				</Button>
+			</div>
+			<div className="space-y-0.5">
+				{status === "checking" && (
+					<p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+						<Loader2 className="h-3.5 w-3.5 animate-spin" />
+						Checking availability…
+					</p>
+				)}
+				{status === "available" && (
+					<p className="flex items-center gap-1.5 text-sm text-[var(--status-success)]">
+						<CheckCircle2 className="h-3.5 w-3.5" />
+						Name available
+					</p>
+				)}
+				{status === "taken" && (
+					<p className="flex items-center gap-1.5 text-sm text-[var(--status-danger)]">
+						<XCircle className="h-3.5 w-3.5" />
+						Name already taken — pick another or
+						regenerate.
+					</p>
+				)}
+				{status === "unknown" && (
+					<p className="text-sm text-[var(--status-warning)]">
+						Couldn&apos;t verify availability — the
+						server will validate on deploy.
+					</p>
+				)}
+			</div>
+		</div>
+	);
 };

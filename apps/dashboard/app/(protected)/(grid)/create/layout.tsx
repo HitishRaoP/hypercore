@@ -1,7 +1,7 @@
 import { CreateLayout } from "@/modules/create/create-layout";
 
 export default function Layout({
-  children,
+	children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <CreateLayout>{children}</CreateLayout>;
+	return <CreateLayout>{children}</CreateLayout>;
 }

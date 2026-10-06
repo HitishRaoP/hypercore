@@ -1,19 +1,19 @@
 import { Router } from "express";
 import multer from "multer";
-import { requireUser } from "../lib/auth";
 import {
-  getDeploymentFiles,
-  getTemplate,
-  checkWorkerNameAvailability,
-  proxyFile,
-  uploadCode,
+	checkWorkerNameAvailability,
+	getDeploymentFiles,
+	getTemplate,
+	proxyFile,
+	uploadCode,
 } from "../controllers/code-upload.controller";
+import { requireUser } from "../lib/auth";
 
 // Keep raw sources in memory, then PUT each file to R2 via the S3 SDK.
 // (multer-s3 only handles a single file and hides keys/metadata from us.)
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
+	storage: multer.memoryStorage(),
+	limits: { fileSize: 5 * 1024 * 1024, files: 10 },
 });
 
 const router = Router();

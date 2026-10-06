@@ -1,10 +1,8 @@
 {
-  "extends": "@hypercore/typescript-config/react-library.json",
-  "compilerOptions": {
-    "paths": {
-      "@hypercore/transactional/*": [
-        "./src/*"
-      ]
-    }
-  }
+	"extends": "@hypercore/typescript-config/react-library.json",
+	"compilerOptions": {
+		"paths": {
+			"@hypercore/transactional/*": ["./src/*"]
+		}
+	}
 }

@@ -1,48 +1,46 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "agent",
-  "version": "0.2.1",
-  "identifier": "com.hypercore.agent",
-  "build": {
-    "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "bun run build",
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "HyperCore Agent",
-        "width": 920,
-        "height": 680,
-        "minWidth": 620,
-        "minHeight": 520,
-        "decorations": false,
-        "maximized": true
-      }
-    ],
-    "security": {
-      "csp": null
-    }
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "createUpdaterArtifacts": true,
-    "icon": [
-      "icons/icon.ico"
-    ],
-    "resources": ["resources/tools"]
-  },
-  "plugins": {
-    "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1MjQ5MEI1NDVFNzI2MEQKUldRTkp1ZEZ0WkFrOVZpZDN4bTFQcDZ1cjJ3YjRaN1oremRpczVDeC94K01CUko5MVRrQlRueEkK",
-      "endpoints": [
-        "https://github.com/HitishRaoP/hypercore/releases/latest/download/latest.json"
-      ],
-      "windows": {
-        "installMode": "passive"
-      }
-    }
-  }
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "agent",
+	"version": "0.2.1",
+	"identifier": "com.hypercore.agent",
+	"build": {
+		"beforeDevCommand": "bun run dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "bun run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "HyperCore Agent",
+				"width": 920,
+				"height": 680,
+				"minWidth": 620,
+				"minHeight": 520,
+				"decorations": false,
+				"maximized": true
+			}
+		],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"createUpdaterArtifacts": true,
+		"icon": ["icons/icon.ico"],
+		"resources": ["resources/tools"]
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY1MjQ5MEI1NDVFNzI2MEQKUldRTkp1ZEZ0WkFrOVZpZDN4bTFQcDZ1cjJ3YjRaN1oremRpczVDeC94K01CUko5MVRrQlRueEkK",
+			"endpoints": [
+				"https://github.com/HitishRaoP/hypercore/releases/latest/download/latest.json"
+			],
+			"windows": {
+				"installMode": "passive"
+			}
+		}
+	}
 }

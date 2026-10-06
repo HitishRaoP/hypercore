@@ -2,7 +2,7 @@ import { app } from "./app";
 import { env } from "./lib/env";
 
 const server = app.listen(env.PORT, () => {
-  console.log(`Server is running on port ${env.PORT}`);
+	console.log(`Server is running on port ${env.PORT}`);
 });
 
 // Agent SSE streams stay open for hours by design. Node's default 5-minute

@@ -8,14 +8,18 @@ import { UploadCode } from "./components/upload-code";
 type CreateStep = "template" | "upload" | null;
 
 export const CreateView = () => {
-  const [selected, setSelected] = useState<CreateStep>(null);
-  const handleBack = () => setSelected(null);
+	const [selected, setSelected] = useState<CreateStep>(null);
+	const handleBack = () => setSelected(null);
 
-  return (
-    <div className="w-full">
-      {selected === null && <CreateOptions onSelect={setSelected} />}
-      {selected === "template" && <HWTemplate onBack={handleBack} />}
-      {selected === "upload" && <UploadCode onBack={handleBack} />}
-    </div>
-  );
+	return (
+		<div className="w-full">
+			{selected === null && (
+				<CreateOptions onSelect={setSelected} />
+			)}
+			{selected === "template" && (
+				<HWTemplate onBack={handleBack} />
+			)}
+			{selected === "upload" && <UploadCode onBack={handleBack} />}
+		</div>
+	);
 };

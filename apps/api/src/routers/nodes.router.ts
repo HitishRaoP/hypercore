@@ -1,5 +1,9 @@
 import express, { Router } from "express";
-import { getNode, listNodes, registerNode } from "../controllers/nodes.controller";
+import {
+	getNode,
+	listNodes,
+	registerNode,
+} from "../controllers/nodes.controller";
 
 const router = Router();
 

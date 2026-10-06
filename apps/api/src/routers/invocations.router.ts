@@ -1,10 +1,9 @@
-import { Router } from "express";
-import express from "express";
-import { requireUser } from "../lib/auth";
+import express, { Router } from "express";
 import {
-  listMyInvocations,
-  postInvocationResult,
+	listMyInvocations,
+	postInvocationResult,
 } from "../controllers/invocations.controller";
+import { requireUser } from "../lib/auth";
 
 const router = Router();
 

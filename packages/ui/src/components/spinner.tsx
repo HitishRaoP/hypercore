@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { cn } from 'cn';
+import { cn } from "cn";
 
 const SEGMENTS = 12;
 const SEGMENT_KEYS = Array.from(
@@ -10,13 +10,13 @@ const SEGMENT_KEYS = Array.from(
 
 function Spinner({
 	className,
-	size = 'default',
+	size = "default",
 	...props
-}: React.ComponentProps<'svg'> & {
-	size?: 'sm' | 'default' | 'lg';
+}: React.ComponentProps<"svg"> & {
+	size?: "sm" | "default" | "lg";
 }) {
 	const sizeClass =
-		size === 'sm' ? 'size-4' : size === 'lg' ? 'size-10' : 'size-6';
+		size === "sm" ? "size-4" : size === "lg" ? "size-10" : "size-6";
 
 	return (
 		<div className="relative flex items-center justify-center">
@@ -48,7 +48,7 @@ function Spinner({
 							className="animate-[spinner-fade_1.2s_linear_infinite]"
 							style={{
 								transform: `rotate(${i * 30}deg)`,
-								transformOrigin: '12px 12px',
+								transformOrigin: "12px 12px",
 								animationDelay: `${delay}s`,
 							}}
 						/>
