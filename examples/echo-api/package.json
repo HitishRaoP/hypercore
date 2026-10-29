@@ -1,0 +1,11 @@
+{
+  "name": "hypercore-echo-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild index.ts --bundle --format=esm --platform=neutral --outfile=bundle.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0"
+  }
+}

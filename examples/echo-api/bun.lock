@@ -1,0 +1,10 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "hypercore-echo-api",
+      "dependencies": {}
+    }
+  },
+  "packages": {}
+}

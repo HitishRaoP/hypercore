@@ -1,0 +1,10 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "hypercore-text-analyzer",
+      "dependencies": {}
+    }
+  },
+  "packages": {}
+}
