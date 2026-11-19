@@ -26,6 +26,7 @@ function lists where it lives, what it does, and who calls it.
 | 05 | [End-to-End Flows](./05-end-to-end-flows.md) | The five real journeys through the system, step by step, with who calls whom. | Debugging a failed run. |
 | 06 | [Setup and Runbook](./06-setup-and-runbook.md) | How to run everything locally, every environment variable, and how to fix common problems. | Setting up or fixing. |
 | 07 | [Dashboard and Packages](./07-dashboard-and-shared-packages.md) | The web dashboard and the five shared packages, summarised. | Working outside the API or agent. |
+| 08 | [Class Diagram](./08-class-diagram.md) | A Mermaid class diagram of every plane, plus a compact version and an image-generation prompt. | Drawing the system or briefing another agent. |
 
 ---
 
