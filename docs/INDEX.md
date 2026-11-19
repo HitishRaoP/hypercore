@@ -27,6 +27,8 @@ function lists where it lives, what it does, and who calls it.
 | 06 | [Setup and Runbook](./06-setup-and-runbook.md) | How to run everything locally, every environment variable, and how to fix common problems. | Setting up or fixing. |
 | 07 | [Dashboard and Packages](./07-dashboard-and-shared-packages.md) | The web dashboard and the five shared packages, summarised. | Working outside the API or agent. |
 | 08 | [Class Diagram](./08-class-diagram.md) | A Mermaid class diagram of every plane, plus a compact version and an image-generation prompt. | Drawing the system or briefing another agent. |
+| 09 | [Use Case Diagram](./09-use-case-diagram.md) | Every actor and use case, in Mermaid and PlantUML, with an image-generation prompt. | Explaining what people and agents can do. |
+| 10 | [High-Level Architecture Diagram](./10-high-level-architecture-diagram.md) | The three planes in one diagram, plus a copy-paste image-generation prompt. | Presenting the system to others. |
 
 ---
 
